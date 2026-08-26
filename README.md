@@ -1,4 +1,4 @@
-# [Nama Game]
+# Supernova
 
 Game jam entry — IFEST 2026
 Tema: **Chain Reaction**
@@ -19,8 +19,8 @@ picu ledakan berantai dengan Nuke, kejar chain setinggi mungkin.
 Godot 4.7, renderer Compatibility. Buka `project.godot`, tekan Play.
 
 ## Tim
-- [nama] — programming
-- [nama] — art
+- Muhammad Fida Jati — programming, art
+- Elsa DelaEla — art
 
 ## Dokumen
 - `CLAUDE.md` — spec teknis
