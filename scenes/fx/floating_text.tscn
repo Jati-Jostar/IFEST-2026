@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/floating_text.gd" id="1_text"]
+
+[node name="FloatingText" type="Node2D"]
+script = ExtResource("1_text")
+
+[node name="Label" type="Label" parent="."]
+text = "x2"
