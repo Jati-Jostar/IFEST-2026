@@ -1,5 +1,30 @@
-# IFEST-2026
+# [Nama Game]
 
+Game jam entry — IFEST 2026
+Tema: **Chain Reaction**
+
+2D top-down arena shooter. Kumpulkan musuh dengan Singularity,
+picu ledakan berantai dengan Nuke, kejar chain setinggi mungkin.
+
+## Kontrol
+| Aksi | Tombol |
+|---|---|
+| Gerak | WASD |
+| Tembak | Mouse kiri / Space |
+| Singularity | Q |
+| Nuke | E |
+| Restart | R |
+
+## Menjalankan
+Godot 4.7, renderer Compatibility. Buka `project.godot`, tekan Play.
+
+## Tim
+- [nama] — programming
+- [nama] — art
+
+## Dokumen
+- `CLAUDE.md` — spec teknis
+- `ASSET_GUIDE.md` — panduan pembuatan asset
 ## Daftar asset lengkap
 
 **Player (3 item)**
