@@ -61,7 +61,10 @@ func take_damage(amount: int, source: String = "bullet") -> void:
 
 func die(killed_by: String = "bullet") -> void:
 	AudioManager.play("asteroid_break", global_position)
-	_spawn_fragments()
+	# Ditunda: dilarang menambah Area2D (fragment) di tengah physics
+	# callback ("flushing queries"). Deferred jalan setelah physics step,
+	# masih sebelum node ini benar-benar dihapus oleh queue_free.
+	call_deferred("_spawn_fragments")
 	asteroid_destroyed.emit(global_position, killed_by)
 	queue_free()
 

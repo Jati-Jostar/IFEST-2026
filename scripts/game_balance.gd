@@ -63,6 +63,26 @@ var fragment_speed: float = 260.0        # pecahan melesat keluar
 var fragment_damage: int = 6             # damage ke musuh ATAU player (tanpa multiplier)
 var fragment_lifetime: float = 1.1       # umur pecahan (detik)
 
+# ============ ABILITY PICKUP ============
+var ability_drop_interval_min: float = 10.0  # jeda spawn pickup (acak di antara min-max)
+var ability_drop_interval_max: float = 20.0
+var max_pickups_on_field: int = 3
+
+# ============ SINGULARITY (pengumpul — TIDAK membunuh) ============
+var singularity_radius: float = 240.0     # jangkauan tarikan
+var singularity_pull_min: float = 60.0    # kecepatan tarik di tepi radius (pixel/detik)
+var singularity_pull_max: float = 480.0   # kecepatan tarik di dekat pusat
+var singularity_duration: float = 2.5     # lama aktif (detik)
+
+# ============ NUKE (detonator — pemicu chain) ============
+var nuke_radius: float = 280.0
+var nuke_damage: int = 60                 # cukup untuk membunuh Heavy sekaligus
+var nuke_duration: float = 0.3            # waktu ring mengembang 0 -> radius penuh
+var shake_nuke_intensity: float = 18.0
+var shake_nuke_duration: float = 0.5
+var hitstop_nuke: float = 0.12            # freeze di momen detonasi
+var nuke_zoom_punch: float = 0.97         # kamera zoom-out sesaat lalu kembali
+
 # ============ CHAIN REACTION ============
 var chain_time_window: float = 2.0       # detik tanpa reaksi = chain berakhir
 var chain_stagger: float = 0.05          # jeda antar generasi ledakan (anti-freeze + terlihat kaskade)

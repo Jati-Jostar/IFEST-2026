@@ -35,3 +35,29 @@ offset_bottom = 80.0
 theme_override_font_sizes/font_size = 20
 text = "CHAIN x1"
 horizontal_alignment = 1
+
+[node name="SingularityLabel" type="Label" parent="."]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -280.0
+offset_top = -70.0
+offset_right = -16.0
+offset_bottom = -44.0
+theme_override_font_sizes/font_size = 18
+text = "[Q] SINGULARITY: -"
+horizontal_alignment = 2
+
+[node name="NukeLabel" type="Label" parent="."]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -280.0
+offset_top = -40.0
+offset_right = -16.0
+offset_bottom = -14.0
+theme_override_font_sizes/font_size = 18
+text = "[E] NUKE: -"
+horizontal_alignment = 2

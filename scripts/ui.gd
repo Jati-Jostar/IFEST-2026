@@ -6,6 +6,12 @@ extends CanvasLayer
 @onready var hp_label: Label = $HPLabel
 @onready var score_label: Label = $ScoreLabel
 @onready var chain_label: Label = $ChainLabel
+@onready var singularity_label: Label = $SingularityLabel
+@onready var nuke_label: Label = $NukeLabel
+
+const COLOR_READY_SINGULARITY := Color(0.45, 0.65, 1.0)
+const COLOR_READY_NUKE := Color(1.0, 0.85, 0.3)
+const COLOR_EMPTY := Color(0.45, 0.45, 0.5)
 
 var _chain_fade_tween: Tween
 
@@ -16,6 +22,20 @@ func set_hp(hp: int) -> void:
 
 func set_score(score: int) -> void:
 	score_label.text = "SCORE: %06d" % score
+
+
+func set_abilities(has_singularity: bool, has_nuke: bool) -> void:
+	singularity_label.text = "[Q] SINGULARITY: %s" % ("READY" if has_singularity else "-")
+	singularity_label.add_theme_color_override(
+		"font_color", COLOR_READY_SINGULARITY if has_singularity else COLOR_EMPTY)
+	nuke_label.text = "[E] NUKE: %s" % ("READY" if has_nuke else "-")
+	nuke_label.add_theme_color_override(
+		"font_color", COLOR_READY_NUKE if has_nuke else COLOR_EMPTY)
+	# Punch kecil supaya perubahan status kelihatan.
+	singularity_label.pivot_offset = singularity_label.size / 2.0
+	nuke_label.pivot_offset = nuke_label.size / 2.0
+	Juice.punch_scale(singularity_label, 1.12, 0.15)
+	Juice.punch_scale(nuke_label, 1.12, 0.15)
 
 
 func set_chain(count: int) -> void:

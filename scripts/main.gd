@@ -6,10 +6,13 @@ extends Node2D
 const SWARM_SCENE := preload("res://scenes/enemies/swarm_enemy.tscn")
 const HEAVY_SCENE := preload("res://scenes/enemies/heavy_enemy.tscn")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
+const PICKUP_SCENE := preload("res://scenes/abilities/ability_pickup.tscn")
 
 var _spawn_timer: float = 0.0
 var _spawn_count: int = 0
 var _asteroid_timer: float = 0.0
+var _pickup_timer: float = 6.0   # drop pertama cepat supaya player segera kenal ability
+var _next_pickup_is_singularity: bool = true
 
 @onready var arena_border: Line2D = $ArenaBorder
 @onready var player: CharacterBody2D = $Player
@@ -23,8 +26,10 @@ func _ready() -> void:
 	chain_manager.chain_changed.connect(ui.set_chain)
 	chain_manager.chain_ended.connect(ui.on_chain_ended)
 	player.hp_changed.connect(ui.set_hp)
+	player.abilities_changed.connect(ui.set_abilities)
 	ui.set_hp(GameBalance.player_max_hp)
 	ui.set_score(0)
+	ui.set_abilities(false, false)
 
 	var w := GameBalance.arena_width
 	var h := GameBalance.arena_height
@@ -54,6 +59,11 @@ func _process(delta: float) -> void:
 	if _asteroid_timer <= 0.0:
 		_asteroid_timer = GameBalance.asteroid_spawn_interval
 		_try_spawn_asteroid()
+	_pickup_timer -= delta
+	if _pickup_timer <= 0.0:
+		_pickup_timer = randf_range(
+			GameBalance.ability_drop_interval_min, GameBalance.ability_drop_interval_max)
+		_try_spawn_pickup()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -104,6 +114,20 @@ func _try_spawn_asteroid() -> void:
 	asteroid.asteroid_destroyed.connect(chain_manager.on_asteroid_destroyed)
 	add_child(asteroid)
 	asteroid.reset_physics_interpolation()
+
+
+func _try_spawn_pickup() -> void:
+	if get_tree().get_nodes_in_group("pickups").size() >= GameBalance.max_pickups_on_field:
+		return
+	var pickup := PICKUP_SCENE.instantiate()
+	# Selang-seling supaya player selalu bisa melengkapi combo gather+detonate.
+	pickup.ability_type = "singularity" if _next_pickup_is_singularity else "nuke"
+	_next_pickup_is_singularity = not _next_pickup_is_singularity
+	pickup.position = Vector2(
+		randf_range(120.0, GameBalance.arena_width - 120.0),
+		randf_range(120.0, GameBalance.arena_height - 120.0))
+	add_child(pickup)
+	pickup.reset_physics_interpolation()
 
 
 func _random_edge_position() -> Vector2:

@@ -9,6 +9,8 @@ extends CharacterBody2D
 @export var fire_rate_override: float = 0.0
 
 const PROJECTILE_SCENE := preload("res://scenes/projectile.tscn")
+const SINGULARITY_SCENE := preload("res://scenes/abilities/singularity.tscn")
+const NUKE_SCENE := preload("res://scenes/abilities/nuke.tscn")
 
 # Jarak minimal pusat player dari tepi arena (kira-kira radius collision).
 const ARENA_MARGIN := 16.0
@@ -17,8 +19,11 @@ const MUZZLE_OFFSET := 20.0
 
 signal player_died
 signal hp_changed(hp: int)
+signal abilities_changed(has_singularity: bool, has_nuke: bool)
 
 var hp: int = 100
+var has_singularity: bool = false
+var has_nuke: bool = false
 var _fire_cooldown: float = 0.0
 var _invuln_left: float = 0.0
 var _is_dead: bool = false
@@ -49,6 +54,44 @@ func _physics_process(delta: float) -> void:
 	_handle_movement()
 	_handle_aim()
 	_handle_shooting(delta)
+	_handle_abilities()
+
+
+# Dipanggil pickup saat disentuh. Mengembalikan false jika slot penuh
+# (pickup dibiarkan di lapangan).
+func collect_ability(ability_type: String) -> bool:
+	if ability_type == "singularity":
+		if has_singularity:
+			return false
+		has_singularity = true
+	else:
+		if has_nuke:
+			return false
+		has_nuke = true
+	abilities_changed.emit(has_singularity, has_nuke)
+	return true
+
+
+func _handle_abilities() -> void:
+	if Input.is_action_just_pressed("ability_singularity") and has_singularity:
+		has_singularity = false
+		abilities_changed.emit(has_singularity, has_nuke)
+		_spawn_ability(SINGULARITY_SCENE)
+	if Input.is_action_just_pressed("ability_nuke") and has_nuke:
+		has_nuke = false
+		abilities_changed.emit(has_singularity, has_nuke)
+		_spawn_ability(NUKE_SCENE)
+
+
+# Ability muncul di posisi kursor mouse (di-clamp ke dalam arena).
+func _spawn_ability(scene: PackedScene) -> void:
+	var pos := get_global_mouse_position().clamp(
+		Vector2(40, 40),
+		Vector2(GameBalance.arena_width - 40, GameBalance.arena_height - 40))
+	var ability := scene.instantiate()
+	ability.position = pos
+	get_tree().current_scene.add_child(ability)
+	ability.reset_physics_interpolation()
 
 
 func take_damage(amount: int) -> void:

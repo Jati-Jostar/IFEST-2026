@@ -94,6 +94,17 @@ func punch_scale(node: CanvasItem, amount: float, duration: float) -> void:
 	tw.tween_property(node, "scale", Vector2.ONE, duration).set_trans(Tween.TRANS_BACK)
 
 
+# ---------------- CAMERA ZOOM PUNCH ----------------
+
+func punch_zoom(amount: float, duration: float) -> void:
+	var cam := get_viewport().get_camera_2d()
+	if cam == null:
+		return
+	cam.zoom = Vector2.ONE * amount
+	var tw := cam.create_tween()
+	tw.tween_property(cam, "zoom", Vector2.ONE, duration)
+
+
 # ---------------- FULL-SCREEN FLASH ----------------
 
 func screen_flash(color: Color, strength: float, duration: float) -> void:
