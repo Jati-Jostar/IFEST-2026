@@ -13,6 +13,8 @@ var _spawn_count: int = 0
 var _asteroid_timer: float = 0.0
 var _pickup_timer: float = 6.0   # drop pertama cepat supaya player segera kenal ability
 var _next_pickup_is_singularity: bool = true
+var _elapsed: float = 0.0        # waktu bermain, untuk difficulty ramp
+var _game_over: bool = false
 
 @onready var arena_border: Line2D = $ArenaBorder
 @onready var player: CharacterBody2D = $Player
@@ -21,12 +23,18 @@ var _next_pickup_is_singularity: bool = true
 
 
 func _ready() -> void:
+	# Pulihkan kecepatan normal — restart bisa terjadi saat slow-motion
+	# game over masih aktif (autoload Juice tidak ikut ke-reset).
+	Engine.time_scale = 1.0
+	Juice.base_time_scale = 1.0
+
 	# Sambungkan sistem pusat: ChainManager -> UI, Player -> UI.
 	chain_manager.score_changed.connect(ui.set_score)
 	chain_manager.chain_changed.connect(ui.set_chain)
 	chain_manager.chain_ended.connect(ui.on_chain_ended)
 	player.hp_changed.connect(ui.set_hp)
 	player.abilities_changed.connect(ui.set_abilities)
+	player.player_died.connect(_on_player_died)
 	ui.set_hp(GameBalance.player_max_hp)
 	ui.set_score(0)
 	ui.set_abilities(false, false)
@@ -47,23 +55,45 @@ func _ready() -> void:
 	# Cegah efek "meluncur" di frame pertama setelah player dipindah paksa.
 	player.reset_physics_interpolation()
 
-	_spawn_timer = GameBalance.enemy_spawn_interval
+	_spawn_timer = GameBalance.enemy_spawn_interval_start
 
 
 func _process(delta: float) -> void:
+	if _game_over:
+		return  # berhenti spawn; restart tetap bisa lewat _unhandled_input
+	_elapsed += delta
 	_spawn_timer -= delta
 	if _spawn_timer <= 0.0:
-		_spawn_timer = GameBalance.enemy_spawn_interval
+		_spawn_timer = _current_spawn_interval()
 		_try_spawn_enemy()
-	_asteroid_timer -= delta
-	if _asteroid_timer <= 0.0:
-		_asteroid_timer = GameBalance.asteroid_spawn_interval
-		_try_spawn_asteroid()
+	if _elapsed >= GameBalance.asteroid_start_time:
+		_asteroid_timer -= delta
+		if _asteroid_timer <= 0.0:
+			_asteroid_timer = GameBalance.asteroid_spawn_interval
+			_try_spawn_asteroid()
 	_pickup_timer -= delta
 	if _pickup_timer <= 0.0:
 		_pickup_timer = randf_range(
 			GameBalance.ability_drop_interval_min, GameBalance.ability_drop_interval_max)
 		_try_spawn_pickup()
+
+
+# Jeda spawn memendek linear seiring waktu bermain (difficulty ramp).
+func _current_spawn_interval() -> float:
+	var t: float = clampf(_elapsed / GameBalance.difficulty_ramp_time, 0.0, 1.0)
+	return lerpf(GameBalance.enemy_spawn_interval_start, GameBalance.enemy_spawn_interval_min, t)
+
+
+func _on_player_died() -> void:
+	_game_over = true
+	AudioManager.play("game_over")
+	# Slow-motion sesaat, lalu layar game over fade in.
+	Juice.base_time_scale = GameBalance.game_over_slowmo_scale
+	Engine.time_scale = GameBalance.game_over_slowmo_scale
+	ui.show_game_over(chain_manager.score, chain_manager.highest_chain)
+	await get_tree().create_timer(GameBalance.game_over_slowmo_time, true, false, true).timeout
+	Juice.base_time_scale = 1.0
+	Engine.time_scale = 1.0
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -77,7 +107,8 @@ func _try_spawn_enemy() -> void:
 	if get_tree().get_nodes_in_group("enemies").size() >= GameBalance.max_enemies:
 		return
 	_spawn_count += 1
-	if _spawn_count % GameBalance.heavy_spawn_every == 0:
+	var heavy_unlocked := _elapsed >= GameBalance.heavy_start_time
+	if heavy_unlocked and _spawn_count % GameBalance.heavy_spawn_every == 0:
 		_spawn_one(HEAVY_SCENE, _random_edge_position())
 	else:
 		# Swarm muncul bergerombol dari satu titik — gerombolan = bahan chain.

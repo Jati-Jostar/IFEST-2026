@@ -8,6 +8,9 @@ extends CanvasLayer
 @onready var chain_label: Label = $ChainLabel
 @onready var singularity_label: Label = $SingularityLabel
 @onready var nuke_label: Label = $NukeLabel
+@onready var game_over_panel: Control = $GameOverPanel
+@onready var final_score_label: Label = $GameOverPanel/Center/VBox/FinalScore
+@onready var best_chain_label: Label = $GameOverPanel/Center/VBox/BestChain
 
 const COLOR_READY_SINGULARITY := Color(0.45, 0.65, 1.0)
 const COLOR_READY_NUKE := Color(1.0, 0.85, 0.3)
@@ -55,6 +58,16 @@ func set_chain(count: int) -> void:
 	# Punch kecil tiap increment.
 	chain_label.pivot_offset = chain_label.size / 2.0
 	Juice.punch_scale(chain_label, 1.2, 0.15)
+
+
+# Layar game over: fade in, bukan muncul mendadak.
+func show_game_over(score: int, best_chain: int) -> void:
+	final_score_label.text = "SCORE: %06d" % score
+	best_chain_label.text = "BEST CHAIN: x%d" % best_chain
+	game_over_panel.visible = true
+	game_over_panel.modulate = Color(1, 1, 1, 0)
+	var tw := game_over_panel.create_tween()
+	tw.tween_property(game_over_panel, "modulate:a", 1.0, 0.6)
 
 
 func on_chain_ended(_final_count: int, _highest: int) -> void:

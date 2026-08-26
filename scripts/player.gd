@@ -111,7 +111,7 @@ func _die() -> void:
 	_is_dead = true
 	hide()
 	AudioManager.play("player_death", global_position)
-	print("GAME OVER — tekan R untuk restart (layar game over menyusul di Phase 7)")
+	Juice.spawn_ring(global_position, 60.0, Color(0.3, 0.9, 1.0, 1.0), 0.4)
 	player_died.emit()
 
 

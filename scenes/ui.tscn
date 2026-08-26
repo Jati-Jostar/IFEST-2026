@@ -61,3 +61,58 @@ offset_bottom = -14.0
 theme_override_font_sizes/font_size = 18
 text = "[E] NUKE: -"
 horizontal_alignment = 2
+
+[node name="ControlsLabel" type="Label" parent="."]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -40.0
+offset_right = 500.0
+offset_bottom = -14.0
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.6, 0.6, 0.7, 1)
+text = "WASD gerak | Mouse/Space tembak | Q Singularity | E Nuke | R restart"
+
+[node name="GameOverPanel" type="Control" parent="."]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Dim" type="ColorRect" parent="GameOverPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0, 0, 0.02, 0.7)
+
+[node name="Center" type="CenterContainer" parent="GameOverPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="GameOverPanel/Center"]
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="Title" type="Label" parent="GameOverPanel/Center/VBox"]
+theme_override_font_sizes/font_size = 52
+theme_override_colors/font_color = Color(1, 0.35, 0.3, 1)
+text = "GAME OVER"
+horizontal_alignment = 1
+
+[node name="FinalScore" type="Label" parent="GameOverPanel/Center/VBox"]
+theme_override_font_sizes/font_size = 28
+text = "SCORE: 000000"
+horizontal_alignment = 1
+
+[node name="BestChain" type="Label" parent="GameOverPanel/Center/VBox"]
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(1, 0.8, 0.3, 1)
+text = "BEST CHAIN: x0"
+horizontal_alignment = 1
+
+[node name="RestartHint" type="Label" parent="GameOverPanel/Center/VBox"]
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.7, 0.7, 0.8, 1)
+text = "Press R to Restart"
+horizontal_alignment = 1

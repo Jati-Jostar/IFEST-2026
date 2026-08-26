@@ -40,13 +40,23 @@ var heavy_speed: float = 55.0          # lambat
 var heavy_contact_damage: int = 15     # sakit kalau kena tabrak
 # (ledakan besar saat mati menyusul di Phase 4)
 
-# ============ ENEMY SPAWNING ============
-var enemy_spawn_interval: float = 2.5  # jeda antar gelombang spawn (detik) — ramp kesulitan di Phase 7
-var heavy_spawn_every: int = 8         # setiap spawn ke-N adalah Heavy (sisanya grup Swarm)
-var swarm_group_min: int = 2           # swarm muncul bergerombol supaya esensi chain terlihat
+# ============ ENEMY SPAWNING & DIFFICULTY RAMP ============
+# Awal: gerombolan swarm saja. Asteroid dan Heavy menyusul, dan jeda
+# spawn memendek perlahan sampai kesulitan penuh tercapai.
+var enemy_spawn_interval_start: float = 2.5  # jeda antar gelombang di awal game (detik)
+var enemy_spawn_interval_min: float = 1.1    # jeda tercepat saat kesulitan penuh
+var difficulty_ramp_time: float = 120.0      # detik untuk mencapai kesulitan penuh
+var heavy_start_time: float = 25.0           # Heavy baru muncul setelah detik ini
+var asteroid_start_time: float = 12.0        # asteroid baru muncul setelah detik ini
+var heavy_spawn_every: int = 8               # setiap spawn ke-N adalah Heavy (sisanya grup Swarm)
+var swarm_group_min: int = 2                 # swarm muncul bergerombol supaya esensi chain terlihat
 var swarm_group_max: int = 4
-var swarm_group_spread: float = 45.0   # sebaran acak anggota grup dari titik spawn (pixel)
-var max_enemies: int = 40              # batas musuh di layar (jaga performa browser)
+var swarm_group_spread: float = 45.0         # sebaran acak anggota grup dari titik spawn (pixel)
+var max_enemies: int = 40                    # batas musuh di layar (jaga performa browser)
+
+# ============ GAME OVER ============
+var game_over_slowmo_scale: float = 0.25     # slow-motion saat player mati
+var game_over_slowmo_time: float = 1.0       # lama slow-motion (detik real)
 
 # ============ ASTEROID (objek netral abu-abu) ============
 var asteroid_hp: int = 20                # 2 peluru

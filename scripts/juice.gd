@@ -14,6 +14,10 @@ const TEXT_SCENE := preload("res://scenes/fx/floating_text.tscn")
 const BASE_SHAKE_DECAY := 10.0   # peluruhan shake (intensitas/detik) saat idle
 const HITSTOP_TIME_SCALE := 0.05
 
+# Time scale "normal" saat ini — hitstop selalu pulih ke nilai ini.
+# Diubah oleh main saat slow-motion game over.
+var base_time_scale: float = 1.0
+
 var _shake_strength: float = 0.0
 var _shake_decay: float = BASE_SHAKE_DECAY
 var _hitstop_end_ms: int = 0
@@ -71,7 +75,7 @@ func hitstop(duration: float) -> void:
 			break
 		# Timer real-time (abaikan time_scale) supaya hitstop bisa berakhir.
 		await get_tree().create_timer(remaining_ms / 1000.0, true, false, true).timeout
-	Engine.time_scale = 1.0
+	Engine.time_scale = base_time_scale
 	_hitstop_active = false
 
 
