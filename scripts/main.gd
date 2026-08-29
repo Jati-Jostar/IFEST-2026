@@ -78,10 +78,17 @@ func _process(delta: float) -> void:
 		_try_spawn_pickup()
 
 
-# Jeda spawn memendek linear seiring waktu bermain (difficulty ramp).
+# Kesulitan 0..1 = kontribusi waktu bermain + kontribusi total skor.
+# Skor tinggi (chain besar) ikut mempercepat tekanan, bukan cuma waktu.
+func _difficulty() -> float:
+	var t_time: float = _elapsed / GameBalance.difficulty_ramp_time
+	var t_score: float = float(chain_manager.score) / GameBalance.score_ramp_full
+	return clampf(t_time + t_score, 0.0, 1.0)
+
+
+# Jeda spawn memendek seiring naiknya kesulitan.
 func _current_spawn_interval() -> float:
-	var t: float = clampf(_elapsed / GameBalance.difficulty_ramp_time, 0.0, 1.0)
-	return lerpf(GameBalance.enemy_spawn_interval_start, GameBalance.enemy_spawn_interval_min, t)
+	return lerpf(GameBalance.enemy_spawn_interval_start, GameBalance.enemy_spawn_interval_min, _difficulty())
 
 
 func _on_player_died() -> void:
@@ -112,8 +119,10 @@ func _try_spawn_enemy() -> void:
 		_spawn_one(HEAVY_SCENE, _random_edge_position())
 	else:
 		# Swarm muncul bergerombol dari satu titik — gerombolan = bahan chain.
+		# Gerombolan makin besar saat kesulitan naik.
 		var center := _random_edge_position()
-		var count := randi_range(GameBalance.swarm_group_min, GameBalance.swarm_group_max)
+		var bonus := int(round(_difficulty() * GameBalance.swarm_group_bonus_max))
+		var count := randi_range(GameBalance.swarm_group_min, GameBalance.swarm_group_max) + bonus
 		var spread := GameBalance.swarm_group_spread
 		for i in count:
 			if get_tree().get_nodes_in_group("enemies").size() >= GameBalance.max_enemies:

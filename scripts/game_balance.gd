@@ -20,7 +20,9 @@ var arena_height: float = 900.0
 # ============ PLAYER ============
 var player_speed: float = 320.0        # kecepatan gerak (pixel/detik)
 var player_max_hp: int = 100           # nyawa maksimal
-var player_fire_rate: float = 0.15     # jeda antar tembakan (detik) — dipakai mulai Phase 2
+var player_fire_rate: float = 0.3      # jeda antar tembakan (detik). Sengaja lambat:
+									   # senjata utama harus terasa lemah lawan gerombolan
+									   # supaya player bergantung pada chain reaction
 var player_invuln_time: float = 0.6    # kebal sesaat setelah kena hit (detik) — dipakai mulai Phase 3
 
 # ============ PROJECTILE (peluru player) ============
@@ -43,9 +45,13 @@ var heavy_contact_damage: int = 15     # sakit kalau kena tabrak
 # ============ ENEMY SPAWNING & DIFFICULTY RAMP ============
 # Awal: gerombolan swarm saja. Asteroid dan Heavy menyusul, dan jeda
 # spawn memendek perlahan sampai kesulitan penuh tercapai.
+# Kesulitan = kontribusi WAKTU + kontribusi SKOR (dijumlah, di-cap 100%).
+# Player yang jago mencetak chain besar akan menaikkan tekanan lebih cepat.
 var enemy_spawn_interval_start: float = 2.5  # jeda antar gelombang di awal game (detik)
-var enemy_spawn_interval_min: float = 1.1    # jeda tercepat saat kesulitan penuh
-var difficulty_ramp_time: float = 120.0      # detik untuk mencapai kesulitan penuh
+var enemy_spawn_interval_min: float = 0.9    # jeda tercepat saat kesulitan penuh
+var difficulty_ramp_time: float = 150.0      # detik bermain untuk ramp penuh (dari waktu saja)
+var score_ramp_full: float = 25000.0         # skor yang menyumbang ramp penuh (dari skor saja)
+var swarm_group_bonus_max: int = 2           # tambahan anggota gerombolan saat kesulitan penuh
 var heavy_start_time: float = 25.0           # Heavy baru muncul setelah detik ini
 var asteroid_start_time: float = 12.0        # asteroid baru muncul setelah detik ini
 var heavy_spawn_every: int = 8               # setiap spawn ke-N adalah Heavy (sisanya grup Swarm)
@@ -92,6 +98,16 @@ var shake_nuke_intensity: float = 18.0
 var shake_nuke_duration: float = 0.5
 var hitstop_nuke: float = 0.12            # freeze di momen detonasi
 var nuke_zoom_punch: float = 0.97         # kamera zoom-out sesaat lalu kembali
+
+# ============ ENEMY SEPARATION (anti-tumpuk) ============
+# Musuh saling mendorong ringan supaya tidak menumpuk di 1 titik —
+# kaskade jadi terbaca sebagai rentetan, bukan satu kilatan.
+# Tanpa physics collision (terlalu mahal untuk build web).
+var separation_radius: float = 28.0        # jarak mulai saling dorong (pixel)
+var separation_weight: float = 1.2         # kekuatan dorong vs arah mengejar.
+										   # Terlalu besar = gerombolan buyar dan
+										   # tidak bisa dikumpulkan — biarkan rapat.
+var separation_update_interval: int = 4    # hitung ulang tiap N frame physics (hemat CPU)
 
 # ============ CHAIN REACTION ============
 var chain_time_window: float = 2.0       # detik tanpa reaksi = chain berakhir
