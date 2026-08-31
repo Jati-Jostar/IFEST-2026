@@ -40,10 +40,10 @@ var swarm_contact_damage: int = 5      # damage saat menyentuh player
 # (death burst / ledakan berantai menyusul di Phase 4)
 
 # ============ HEAVY ENEMY (musuh besar merah tua) ============
-var heavy_hp: int = 90                 # tebal: beberapa burst swarm tidak menjatuhkannya,
+var heavy_hp: int = 50                 # tebal: beberapa burst swarm tidak menjatuhkannya,
 									   # tapi chain besar yang panjang akhirnya BISA membunuhnya
 									   # -> Heavy meledak -> chain menyala lagi
-var heavy_speed: float = 55.0          # lambat
+var heavy_speed: float = 80.0          # lambat
 var heavy_contact_damage: int = 15     # sakit kalau kena tabrak
 # (ledakan besar saat mati menyusul di Phase 4)
 

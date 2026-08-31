@@ -1,23 +1,22 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://3j2lx0pt677"]
 
-[ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="Script" uid="uid://c27u8eq0cyadf" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="Texture2D" uid="uid://70mlv3t3sdw" path="res://assets/sprites/Ship.png" id="2_g2els"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player"]
 radius = 14.0
 
-[node name="Player" type="CharacterBody2D"]
-collision_layer = 1
+[node name="Player" type="CharacterBody2D" unique_id=1407575043]
 collision_mask = 0
 motion_mode = 1
 script = ExtResource("1_player")
 
-[node name="Visual" type="Node2D" parent="."]
+[node name="Visual" type="Node2D" parent="." unique_id=581974739]
 
-[node name="Placeholder" type="Polygon2D" parent="Visual"]
-color = Color(0.2, 0.9, 1, 1)
-polygon = PackedVector2Array(0, -16, 12, 12, 0, 6, -12, 12)
+[node name="Placeholder" type="Sprite2D" parent="Visual" unique_id=2027996669]
+texture = ExtResource("2_g2els")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1937321691]
 shape = SubResource("CircleShape2D_player")
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1412993194]

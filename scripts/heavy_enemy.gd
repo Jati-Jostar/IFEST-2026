@@ -9,5 +9,5 @@ func _setup_stats() -> void:
 	max_hp = GameBalance.heavy_hp
 	speed = GameBalance.heavy_speed
 	contact_damage = GameBalance.heavy_contact_damage
-	contact_range = 38.0
+	contact_range = 50
 	death_audio_event = "heavy_death"

@@ -1,20 +1,22 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://b4e82hmvw2lw5"]
 
-[ext_resource type="Script" path="res://scripts/heavy_enemy.gd" id="1_heavy"]
+[ext_resource type="Script" uid="uid://bua4gr404lqiy" path="res://scripts/heavy_enemy.gd" id="1_heavy"]
+[ext_resource type="Texture2D" uid="uid://xcwkcfg67ims" path="res://assets/sprites/heavy.png" id="2_n2l02"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_heavy"]
 radius = 22.0
 
-[node name="HeavyEnemy" type="Area2D"]
+[node name="HeavyEnemy" type="Area2D" unique_id=1613021187]
 collision_layer = 4
 collision_mask = 0
 script = ExtResource("1_heavy")
 
-[node name="Visual" type="Node2D" parent="."]
+[node name="Visual" type="Node2D" parent="." unique_id=1733565762]
 
-[node name="Placeholder" type="Polygon2D" parent="Visual"]
-color = Color(0.55, 0.1, 0.1, 1)
-polygon = PackedVector2Array(-20, -20, 20, -20, 20, 20, -20, 20)
+[node name="Placeholder" type="Sprite2D" parent="Visual" unique_id=914470998]
+scale = Vector2(1.52, 1.52)
+texture = ExtResource("2_n2l02")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=586706815]
+scale = Vector2(1.395, 1.395)
 shape = SubResource("CircleShape2D_heavy")
