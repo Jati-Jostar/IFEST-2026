@@ -26,7 +26,6 @@ Juice="*res://scripts/juice.gd"
 window/size/viewport_width=960
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
-window/stretch/aspect="expand"
 
 [dotnet]
 
@@ -100,3 +99,4 @@ rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 environment/defaults/default_clear_color=Color(0.05, 0.06, 0.1, 1)
+renderer/stretch/aspect="expand"

@@ -1,9 +1,20 @@
 extends Node2D
 
-# NUKE — pemicu chain reaction. Ledakan lingkaran besar yang mengembang
-# dari 0 ke radius penuh. Damage diterapkan saat gelombang ring MELEWATI
-# objek, jadi kaskade terbaca menjalar keluar. Player ikut kena
-# (dikali self-damage multiplier), sekali saja.
+# NUKE — senjata pamungkas langka sekaligus pemicu chain terbesar.
+# Ledakan lingkaran yang mengembang dari 0 ke radius penuh dan MENGHAPUS
+# TOTAL semua yang dilewatinya: swarm, Heavy, dan asteroid. Tanpa
+# falloff, tanpa penyintas di dalam radius.
+#
+# Damage diterapkan saat gelombang ring MELEWATI objek (bukan sekaligus),
+# jadi penghapusan terbaca menjalar keluar dari pusat.
+#
+# Yang tetap menjalar KELUAR radius:
+# - Heavy yang mati tetap meledak sendiri (reset chain depth ke 0)
+# - Asteroid yang hancur tetap memuntahkan fragment
+# Semua kill oleh Nuke dihitung sebagai chain event.
+#
+# Player ikut kena, tapi memakai nuke_self_damage terpisah (dikali
+# player_self_damage_multiplier) supaya Nuke tidak one-shot player.
 
 var _t: float = 0.0
 var _prev_radius: float = 0.0
@@ -14,7 +25,8 @@ func _ready() -> void:
 	AudioManager.play("nuke_activate", global_position)
 	Juice.hitstop(GameBalance.hitstop_nuke)
 	Juice.shake(GameBalance.shake_nuke_intensity, GameBalance.shake_nuke_duration)
-	Juice.screen_flash(Color(1, 1, 1, 1), 0.35, 0.2)
+	Juice.screen_flash(Color(1, 1, 1, 1),
+		GameBalance.nuke_flash_strength, GameBalance.nuke_flash_duration)
 	Juice.punch_zoom(GameBalance.nuke_zoom_punch, 0.3)
 
 
@@ -33,7 +45,8 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 
 
-# Damage semua objek yang jaraknya baru saja dilewati gelombang ring.
+# Hapus semua objek yang jaraknya baru saja dilewati gelombang ring.
+# Kill oleh Nuke selalu depth 0 (Nuke pemicu chain, bukan sambungannya).
 func _damage_band(from_r: float, to_r: float) -> void:
 	if to_r <= from_r:
 		return
@@ -41,19 +54,19 @@ func _damage_band(from_r: float, to_r: float) -> void:
 		if is_instance_valid(enemy):
 			var d := global_position.distance_to(enemy.global_position)
 			if d > from_r and d <= to_r:
-				enemy.take_damage(GameBalance.nuke_damage, "nuke")
+				enemy.take_damage(GameBalance.nuke_damage, "nuke", 0)
 	for asteroid in get_tree().get_nodes_in_group("asteroids"):
 		if is_instance_valid(asteroid):
 			var d := global_position.distance_to(asteroid.global_position)
 			if d > from_r and d <= to_r:
-				asteroid.take_damage(GameBalance.nuke_damage, "nuke")
+				asteroid.take_damage(GameBalance.nuke_damage, "nuke", 0)
 	if not _player_hit:
 		var player: Node2D = get_tree().get_first_node_in_group("player")
 		if player != null and is_instance_valid(player) and player.has_method("take_damage"):
 			if global_position.distance_to(player.global_position) <= to_r:
 				_player_hit = true
 				player.take_damage(int(ceil(
-					GameBalance.nuke_damage * GameBalance.player_self_damage_multiplier)))
+					GameBalance.nuke_self_damage * GameBalance.player_self_damage_multiplier)))
 
 
 func _draw() -> void:
@@ -62,7 +75,7 @@ func _draw() -> void:
 	var radius := maxf(GameBalance.nuke_radius * p, 2.0)
 	# Setelah penuh, ring memudar.
 	var fade := 1.0 if _t <= duration else clampf(1.0 - (_t - duration) / 0.2, 0.0, 1.0)
-	var width := lerpf(14.0, 3.0, p)   # garis menipis saat membesar
+	var width := lerpf(18.0, 3.0, p)   # garis menipis saat membesar
 	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 64, Color(1.0, 0.75, 0.2, fade), width)
 	# Kilatan inti di awal ledakan.
 	if p < 0.35:

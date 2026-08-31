@@ -13,6 +13,14 @@ offset_bottom = 42.0
 theme_override_font_sizes/font_size = 22
 text = "HP: 100"
 
+[node name="AmmoLabel" type="Label" parent="."]
+offset_left = 16.0
+offset_top = 44.0
+offset_right = 260.0
+offset_bottom = 74.0
+theme_override_font_sizes/font_size = 22
+text = "AMMO: 5 / 5"
+
 [node name="ScoreLabel" type="Label" parent="."]
 anchor_left = 0.5
 anchor_right = 0.5
@@ -41,12 +49,12 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -280.0
+offset_left = -340.0
 offset_top = -70.0
 offset_right = -16.0
 offset_bottom = -44.0
-theme_override_font_sizes/font_size = 18
-text = "[Q] SINGULARITY: -"
+theme_override_font_sizes/font_size = 20
+text = "[Q] SINGULARITY: —"
 horizontal_alignment = 2
 
 [node name="NukeLabel" type="Label" parent="."]
@@ -54,12 +62,12 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -280.0
+offset_left = -340.0
 offset_top = -40.0
 offset_right = -16.0
 offset_bottom = -14.0
-theme_override_font_sizes/font_size = 18
-text = "[E] NUKE: -"
+theme_override_font_sizes/font_size = 20
+text = "[E] NUKE: —"
 horizontal_alignment = 2
 
 [node name="ControlsLabel" type="Label" parent="."]

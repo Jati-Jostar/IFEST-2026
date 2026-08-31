@@ -32,7 +32,11 @@ func _process(delta: float) -> void:
 
 
 # Dipanggil (via signal) setiap ada musuh mati.
-func on_enemy_died(enemy_type: String, pos: Vector2, killed_by: String) -> void:
+# depth = kedalaman chain dari kematian ini (0 = dibunuh langsung player /
+# nuke / fragment / ledakan heavy). Burst dari kematian depth-d damage-nya
+# meluruh (decay^d), dan korbannya mati dengan depth d+1 — chain punya
+# akhir alami kecuali "di-recharge" oleh Heavy atau fragment.
+func on_enemy_died(enemy_type: String, pos: Vector2, killed_by: String, depth: int) -> void:
 	if killed_by != "bullet":
 		_increment_chain(pos)
 
@@ -43,15 +47,25 @@ func on_enemy_died(enemy_type: String, pos: Vector2, killed_by: String) -> void:
 
 	# Efek kematian + burst yang menular.
 	if enemy_type == "heavy":
+		# Ledakan Heavy MENGABAIKAN decay: damage penuh, depth di-reset ke 0.
+		# Inilah alat "recharge" chain yang sedang sekarat.
 		Juice.spawn_ring(pos, GameBalance.heavy_explosion_radius, Color(1.0, 0.6, 0.2, 1.0), 0.4)
 		Juice.shake(GameBalance.shake_heavy_intensity, GameBalance.shake_heavy_duration)
 		Juice.hitstop(GameBalance.hitstop_heavy)
 		Juice.screen_flash(Color(1.0, 0.85, 0.6, 1.0), 0.2, 0.15)
-		_schedule_explosion(pos, GameBalance.heavy_explosion_radius, GameBalance.heavy_explosion_damage)
+		_schedule_explosion(pos, GameBalance.heavy_explosion_radius,
+			GameBalance.heavy_explosion_damage, 0)
 	else:
 		Juice.spawn_ring(pos, GameBalance.swarm_death_burst_radius, Color(1.0, 0.45, 0.35, 1.0), 0.25)
 		Juice.shake(GameBalance.shake_swarm_intensity, GameBalance.shake_swarm_duration)
-		_schedule_explosion(pos, GameBalance.swarm_death_burst_radius, GameBalance.swarm_death_burst_damage)
+		# Burst swarm meluruh sesuai kedalaman; berhenti di cap atau saat
+		# damage-nya habis termakan decay.
+		if depth < GameBalance.chain_max_depth:
+			var burst_damage := int(round(
+				GameBalance.swarm_death_burst_damage * pow(GameBalance.chain_damage_decay, depth)))
+			if burst_damage >= 1:
+				_schedule_explosion(pos, GameBalance.swarm_death_burst_radius,
+					burst_damage, depth + 1)
 
 
 # Dipanggil (via signal) setiap ada asteroid hancur.
@@ -100,17 +114,18 @@ func _end_chain() -> void:
 
 # Ledakan area dengan jeda stagger kecil: mencegah kaskade raksasa
 # membeku dalam satu frame, sekaligus membuatnya terbaca sebagai kaskade.
-func _schedule_explosion(pos: Vector2, radius: float, damage: int) -> void:
+# next_depth = kedalaman chain untuk korban ledakan ini.
+func _schedule_explosion(pos: Vector2, radius: float, damage: int, next_depth: int) -> void:
 	await get_tree().create_timer(GameBalance.chain_stagger).timeout
 
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		if is_instance_valid(enemy) and enemy.global_position.distance_to(pos) <= radius:
-			enemy.take_damage(damage, "chain")
+			enemy.take_damage(damage, "chain", next_depth)
 
-	# Asteroid juga ikut hancur oleh ledakan -> memuntahkan fragment.
+	# Asteroid juga ikut rusak oleh ledakan -> bisa memuntahkan fragment.
 	for asteroid in get_tree().get_nodes_in_group("asteroids"):
 		if is_instance_valid(asteroid) and asteroid.global_position.distance_to(pos) <= radius:
-			asteroid.take_damage(damage, "chain")
+			asteroid.take_damage(damage, "chain", next_depth)
 
 	# Player ikut kena, tapi dikali self-damage multiplier (default 0.35).
 	var player: Node2D = get_tree().get_first_node_in_group("player")

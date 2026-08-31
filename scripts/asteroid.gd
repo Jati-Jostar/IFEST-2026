@@ -48,7 +48,9 @@ func _bounce_on_arena_edges() -> void:
 		velocity.y = -velocity.y
 
 
-func take_damage(amount: int, source: String = "bullet") -> void:
+# _depth diterima demi kompatibilitas dengan ledakan chain, tapi diabaikan:
+# fragment selalu membawa depth 0 (mengabaikan decay) — itu peran asteroid.
+func take_damage(amount: int, source: String = "bullet", _depth: int = 0) -> void:
 	if hp <= 0:
 		return
 	hp -= amount
@@ -69,14 +71,18 @@ func die(killed_by: String = "bullet") -> void:
 	queue_free()
 
 
+# Pecahan selalu terbang ke arah yang SAMA setiap kali: sudut merata
+# 360/fragment_count, dimulai dari fragment_start_angle_deg. Tidak ada
+# unsur acak — supaya player bisa hafal polanya dan merencanakannya.
+# Semua pecahan berbagi kecepatan dan umur yang sama persis.
 func _spawn_fragments() -> void:
-	var count := randi_range(GameBalance.fragment_count_min, GameBalance.fragment_count_max)
 	var parent := get_tree().current_scene
 	if parent == null:
 		return
+	var count: int = maxi(GameBalance.fragment_count, 1)
+	var start := deg_to_rad(GameBalance.fragment_start_angle_deg)
 	for i in count:
-		# Sebar merata melingkar + sedikit acak supaya tidak kaku.
-		var angle := TAU * float(i) / float(count) + randf_range(-0.3, 0.3)
+		var angle := start + TAU * float(i) / float(count)
 		var fragment := FRAGMENT_SCENE.instantiate()
 		fragment.position = global_position
 		fragment.velocity = Vector2.RIGHT.rotated(angle) * GameBalance.fragment_speed

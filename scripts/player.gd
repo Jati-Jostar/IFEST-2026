@@ -20,10 +20,12 @@ const MUZZLE_OFFSET := 20.0
 signal player_died
 signal hp_changed(hp: int)
 signal abilities_changed(has_singularity: bool, has_nuke: bool)
+signal ammo_changed(ammo: int, max_ammo: int)
 
 var hp: int = 100
 var has_singularity: bool = false
 var has_nuke: bool = false
+var ammo: int = 0
 var _fire_cooldown: float = 0.0
 var _invuln_left: float = 0.0
 var _is_dead: bool = false
@@ -35,6 +37,7 @@ var _is_dead: bool = false
 func _ready() -> void:
 	add_to_group("player")
 	hp = GameBalance.player_max_hp
+	ammo = GameBalance.player_max_ammo
 	# Kamera tidak boleh memperlihatkan area di luar arena.
 	camera.limit_left = 0
 	camera.limit_top = 0
@@ -137,11 +140,21 @@ func _handle_shooting(delta: float) -> void:
 	_fire_cooldown -= delta
 	if not Input.is_action_pressed("shoot"):
 		return
+	# Peluru habis = tidak bisa menembak sama sekali. Isi ulang hanya
+	# lewat pickup amunisi — tidak ada reload otomatis / regen.
+	if ammo <= 0:
+		return
 	if _fire_cooldown > 0.0:
 		return
 	var fire_rate := fire_rate_override if fire_rate_override > 0.0 else GameBalance.player_fire_rate
 	_fire_cooldown = fire_rate
 	_shoot()
+
+
+# Dipanggil pickup amunisi. Selalu berhasil (tidak seperti slot ability).
+func refill_ammo(amount: int) -> void:
+	ammo = mini(ammo + amount, GameBalance.player_max_ammo)
+	ammo_changed.emit(ammo, GameBalance.player_max_ammo)
 
 
 func _shoot() -> void:
@@ -154,4 +167,6 @@ func _shoot() -> void:
 	# Peluru jadi anak scene utama, bukan anak player, supaya tidak ikut bergerak.
 	get_tree().current_scene.add_child(projectile)
 	projectile.reset_physics_interpolation()  # cegah kedip 1 frame di posisi salah
+	ammo -= 1
+	ammo_changed.emit(ammo, GameBalance.player_max_ammo)
 	AudioManager.play("player_shoot", global_position)

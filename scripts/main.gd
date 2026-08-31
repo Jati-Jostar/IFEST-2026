@@ -1,19 +1,23 @@
 extends Node2D
 
-# Main scene: arena, posisi awal player, spawner musuh, restart.
-# UI, chain system, dan game over screen menyusul di phase berikutnya.
+# Main scene: arena, player, spawner cluster musuh, asteroid, pickup,
+# game over, restart. Musuh spawn sebagai CLUSTER (swarm mengelilingi
+# Heavy) dan ramp kesulitan utamanya = jarak antar cluster yang makin
+# rapat seiring waktu bertahan (dipercepat skor).
 
 const SWARM_SCENE := preload("res://scenes/enemies/swarm_enemy.tscn")
 const HEAVY_SCENE := preload("res://scenes/enemies/heavy_enemy.tscn")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
 const PICKUP_SCENE := preload("res://scenes/abilities/ability_pickup.tscn")
+const AMMO_PICKUP_SCENE := preload("res://scenes/abilities/ammo_pickup.tscn")
 
-var _spawn_timer: float = 0.0
-var _spawn_count: int = 0
+var _cluster_timer: float = 1.5  # cluster pertama muncul cepat
 var _asteroid_timer: float = 0.0
-var _pickup_timer: float = 6.0   # drop pertama cepat supaya player segera kenal ability
+var _pickup_timer: float = 8.0   # drop pertama cepat supaya player segera kenal ability
 var _next_pickup_is_singularity: bool = true
-var _elapsed: float = 0.0        # waktu bermain, untuk difficulty ramp
+var _ammo_timer: float = 3.0     # amunisi pertama muncul lebih cepat dari ability
+var _next_cluster_id: int = 0
+var _elapsed: float = 0.0        # waktu bermain, untuk ramp spacing
 var _game_over: bool = false
 
 @onready var arena_border: Line2D = $ArenaBorder
@@ -34,10 +38,12 @@ func _ready() -> void:
 	chain_manager.chain_ended.connect(ui.on_chain_ended)
 	player.hp_changed.connect(ui.set_hp)
 	player.abilities_changed.connect(ui.set_abilities)
+	player.ammo_changed.connect(ui.set_ammo)
 	player.player_died.connect(_on_player_died)
 	ui.set_hp(GameBalance.player_max_hp)
 	ui.set_score(0)
 	ui.set_abilities(false, false)
+	ui.set_ammo(GameBalance.player_max_ammo, GameBalance.player_max_ammo)
 
 	var w := GameBalance.arena_width
 	var h := GameBalance.arena_height
@@ -55,17 +61,15 @@ func _ready() -> void:
 	# Cegah efek "meluncur" di frame pertama setelah player dipindah paksa.
 	player.reset_physics_interpolation()
 
-	_spawn_timer = GameBalance.enemy_spawn_interval_start
-
 
 func _process(delta: float) -> void:
 	if _game_over:
 		return  # berhenti spawn; restart tetap bisa lewat _unhandled_input
 	_elapsed += delta
-	_spawn_timer -= delta
-	if _spawn_timer <= 0.0:
-		_spawn_timer = _current_spawn_interval()
-		_try_spawn_enemy()
+	_cluster_timer -= delta
+	if _cluster_timer <= 0.0:
+		_cluster_timer = GameBalance.cluster_spawn_interval
+		_try_spawn_cluster()
 	if _elapsed >= GameBalance.asteroid_start_time:
 		_asteroid_timer -= delta
 		if _asteroid_timer <= 0.0:
@@ -74,21 +78,17 @@ func _process(delta: float) -> void:
 	_pickup_timer -= delta
 	if _pickup_timer <= 0.0:
 		_pickup_timer = randf_range(
-			GameBalance.ability_drop_interval_min, GameBalance.ability_drop_interval_max)
+			GameBalance.ability_spawn_interval_min, GameBalance.ability_spawn_interval_max)
 		_try_spawn_pickup()
+	_ammo_timer -= delta
+	if _ammo_timer <= 0.0:
+		_ammo_timer = GameBalance.ammo_spawn_interval
+		_try_spawn_ammo()
 
 
-# Kesulitan 0..1 = kontribusi waktu bermain + kontribusi total skor.
-# Skor tinggi (chain besar) ikut mempercepat tekanan, bukan cuma waktu.
-func _difficulty() -> float:
-	var t_time: float = _elapsed / GameBalance.difficulty_ramp_time
-	var t_score: float = float(chain_manager.score) / GameBalance.score_ramp_full
-	return clampf(t_time + t_score, 0.0, 1.0)
-
-
-# Jeda spawn memendek seiring naiknya kesulitan.
-func _current_spawn_interval() -> float:
-	return lerpf(GameBalance.enemy_spawn_interval_start, GameBalance.enemy_spawn_interval_min, _difficulty())
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("restart"):
+		get_tree().reload_current_scene()
 
 
 func _on_player_died() -> void:
@@ -103,41 +103,114 @@ func _on_player_died() -> void:
 	Engine.time_scale = 1.0
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	# Restart sederhana untuk keperluan playtest (dipoles di Phase 7).
-	if event.is_action_pressed("restart"):
-		get_tree().reload_current_scene()
+# ---------------- CLUSTER SPAWNING ----------------
 
-
-func _try_spawn_enemy() -> void:
-	# Batasi jumlah musuh demi performa browser.
-	if get_tree().get_nodes_in_group("enemies").size() >= GameBalance.max_enemies:
+func _try_spawn_cluster() -> void:
+	if _enemy_count() >= GameBalance.max_enemies:
 		return
-	_spawn_count += 1
-	var heavy_unlocked := _elapsed >= GameBalance.heavy_start_time
-	if heavy_unlocked and _spawn_count % GameBalance.heavy_spawn_every == 0:
-		_spawn_one(HEAVY_SCENE, _random_edge_position())
-	else:
-		# Swarm muncul bergerombol dari satu titik — gerombolan = bahan chain.
-		# Gerombolan makin besar saat kesulitan naik.
-		var center := _random_edge_position()
-		var bonus := int(round(_difficulty() * GameBalance.swarm_group_bonus_max))
-		var count := randi_range(GameBalance.swarm_group_min, GameBalance.swarm_group_max) + bonus
-		var spread := GameBalance.swarm_group_spread
-		for i in count:
-			if get_tree().get_nodes_in_group("enemies").size() >= GameBalance.max_enemies:
+	var center := _find_cluster_center()
+	var cid := _next_cluster_id
+	_next_cluster_id += 1
+
+	# Heavy: hanya SEBAGIAN cluster yang membawanya (cluster_heavy_chance),
+	# jumlahnya di layar dibatasi, dan posisinya ditolak kalau terlalu
+	# dekat Heavy lain. Tujuannya Heavy terbaca sebagai kejadian penting —
+	# "ada Heavy di sana, itu pemicu chain-ku" — bukan hiasan latar.
+	if _elapsed >= GameBalance.heavy_start_time \
+			and randf() < GameBalance.cluster_heavy_chance \
+			and _can_spawn_heavy_at(center):
+		for i in GameBalance.cluster_heavy_max:
+			if _enemy_count() >= GameBalance.max_enemies:
+				return
+			if _heavy_count() >= GameBalance.heavy_max_on_screen:
 				break
-			var offset := Vector2(randf_range(-spread, spread), randf_range(-spread, spread))
-			_spawn_one(SWARM_SCENE, center + offset)
+			var heavy_off := Vector2.RIGHT.rotated(randf() * TAU) * randf_range(0.0, 40.0)
+			_spawn_one(HEAVY_SCENE, center + heavy_off, cid)
+
+	# Swarm menyebar di sekeliling pusat cluster — tersebar sejak spawn,
+	# bukan menumpuk di 1 titik; separation langsung merapikan sisanya.
+	var swarm_count := randi_range(GameBalance.cluster_swarm_min, GameBalance.cluster_swarm_max)
+	for i in swarm_count:
+		if _enemy_count() >= GameBalance.max_enemies:
+			return
+		var off := Vector2.RIGHT.rotated(randf() * TAU) \
+			* randf_range(25.0, GameBalance.cluster_spawn_radius)
+		_spawn_one(SWARM_SCENE, center + off, cid)
 
 
-func _spawn_one(scene: PackedScene, pos: Vector2) -> void:
+func _spawn_one(scene: PackedScene, pos: Vector2, cid: int) -> void:
 	var enemy := scene.instantiate()
 	enemy.position = pos
+	enemy.cluster_id = cid
 	enemy.enemy_died.connect(chain_manager.on_enemy_died)
 	add_child(enemy)
 	enemy.reset_physics_interpolation()
 
+
+func _enemy_count() -> int:
+	return get_tree().get_nodes_in_group("enemies").size()
+
+
+func _heavy_count() -> int:
+	return get_tree().get_nodes_in_group("heavies").size()
+
+
+# Heavy ditolak kalau kuota layar penuh atau ada Heavy lain terlalu dekat.
+func _can_spawn_heavy_at(pos: Vector2) -> bool:
+	if _heavy_count() >= GameBalance.heavy_max_on_screen:
+		return false
+	for h in get_tree().get_nodes_in_group("heavies"):
+		var node := h as Node2D
+		if node != null and node.global_position.distance_to(pos) < GameBalance.heavy_min_distance:
+			return false
+	return true
+
+
+# Jarak minimal antar cluster: mulai renggang, makin rapat seiring waktu
+# bertahan + skor. Late game chain bisa melompat antar cluster.
+func _current_cluster_spacing() -> float:
+	var t_time: float = _elapsed / GameBalance.cluster_spacing_ramp
+	var t_score: float = float(chain_manager.score) / GameBalance.score_ramp_full
+	var t := clampf(t_time + t_score, 0.0, 1.0)
+	return lerpf(GameBalance.cluster_spacing_start, GameBalance.cluster_spacing_end, t)
+
+
+# Cari titik tepi yang berjarak >= spacing dari semua musuh hidup.
+# Kalau 10 percobaan gagal (arena penuh), pakai kandidat terjauh.
+func _find_cluster_center() -> Vector2:
+	var spacing := _current_cluster_spacing()
+	var best := _random_edge_position()
+	var best_nearest := -1.0
+	for attempt in 10:
+		var candidate := _random_edge_position()
+		var nearest := INF
+		for e in get_tree().get_nodes_in_group("enemies"):
+			var node := e as Node2D
+			if node != null:
+				nearest = minf(nearest, candidate.distance_to(node.global_position))
+		if nearest >= spacing:
+			return candidate
+		if nearest > best_nearest:
+			best_nearest = nearest
+			best = candidate
+	return best
+
+
+func _random_edge_position() -> Vector2:
+	var w := GameBalance.arena_width
+	var h := GameBalance.arena_height
+	match randi() % 4:
+		0:
+			return Vector2(randf_range(0.0, w), 0.0)      # atas
+		1:
+			return Vector2(randf_range(0.0, w), h)        # bawah
+		2:
+			return Vector2(0.0, randf_range(0.0, h))      # kiri
+		_:
+			return Vector2(w, randf_range(0.0, h))        # kanan
+
+
+# ---------------- ASTEROID & PICKUP ----------------
 
 func _try_spawn_asteroid() -> void:
 	if get_tree().get_nodes_in_group("asteroids").size() >= GameBalance.max_asteroids:
@@ -157,28 +230,33 @@ func _try_spawn_asteroid() -> void:
 
 
 func _try_spawn_pickup() -> void:
-	if get_tree().get_nodes_in_group("pickups").size() >= GameBalance.max_pickups_on_field:
+	if get_tree().get_nodes_in_group("pickups").size() >= GameBalance.ability_max_on_field:
 		return
 	var pickup := PICKUP_SCENE.instantiate()
 	# Selang-seling supaya player selalu bisa melengkapi combo gather+detonate.
 	pickup.ability_type = "singularity" if _next_pickup_is_singularity else "nuke"
 	_next_pickup_is_singularity = not _next_pickup_is_singularity
-	pickup.position = Vector2(
-		randf_range(120.0, GameBalance.arena_width - 120.0),
-		randf_range(120.0, GameBalance.arena_height - 120.0))
+	pickup.position = _random_inner_position()
 	add_child(pickup)
 	pickup.reset_physics_interpolation()
 
 
-func _random_edge_position() -> Vector2:
-	var w := GameBalance.arena_width
-	var h := GameBalance.arena_height
-	match randi() % 4:
-		0:
-			return Vector2(randf_range(0.0, w), 0.0)      # atas
-		1:
-			return Vector2(randf_range(0.0, w), h)        # bawah
-		2:
-			return Vector2(0.0, randf_range(0.0, h))      # kiri
-		_:
-			return Vector2(w, randf_range(0.0, h))        # kanan
+# Titik acak di dalam arena, menjauh dari tepi — dipakai semua pickup
+# supaya selalu terlihat dan bisa dijangkau player.
+func _random_inner_position() -> Vector2:
+	var m := GameBalance.pickup_edge_margin
+	return Vector2(
+		randf_range(m, GameBalance.arena_width - m),
+		randf_range(m, GameBalance.arena_height - m))
+
+
+# Pickup amunisi: muncul acak di dalam arena, menjauh dari tepi supaya
+# selalu terlihat dan bisa dijangkau. Memakai scene/logika pickup yang
+# sama dengan ability (PickupBase), hanya beda grup dan efek ambilnya.
+func _try_spawn_ammo() -> void:
+	if get_tree().get_nodes_in_group("ammo_pickups").size() >= GameBalance.ammo_max_on_field:
+		return
+	var ammo := AMMO_PICKUP_SCENE.instantiate()
+	ammo.position = _random_inner_position()
+	add_child(ammo)
+	ammo.reset_physics_interpolation()
