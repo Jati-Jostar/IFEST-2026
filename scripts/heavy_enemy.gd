@@ -6,6 +6,7 @@ extends EnemyBase
 
 func _setup_stats() -> void:
 	enemy_type = "heavy"
+	body_radius = GameBalance.heavy_body_radius
 	max_hp = GameBalance.heavy_hp
 	speed = GameBalance.heavy_speed
 	contact_damage = GameBalance.heavy_contact_damage

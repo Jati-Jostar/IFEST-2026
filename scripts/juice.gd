@@ -130,6 +130,18 @@ func spawn_ring(position: Vector2, radius: float, color: Color, duration: float)
 	ring.setup(radius, color, duration)
 
 
+# Spawn scene FX apa pun (mis. animasi ledakan) di posisi tertentu.
+# Ikut kena cap max_fx_nodes supaya kaskade besar tidak meledakkan jumlah node.
+func spawn_fx(scene: PackedScene, position: Vector2) -> void:
+	if scene == null or not _fx_slot_free():
+		return
+	var fx := scene.instantiate()
+	_track_fx(fx)
+	fx.position = position
+	get_tree().current_scene.add_child(fx)
+	fx.reset_physics_interpolation()
+
+
 func spawn_sparks(position: Vector2, direction: Vector2) -> void:
 	if not _fx_slot_free():
 		return

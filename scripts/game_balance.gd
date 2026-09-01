@@ -24,7 +24,7 @@ var player_fire_rate: float = 0.3      # jeda antar tembakan (detik). Sengaja la
 									   # senjata utama harus terasa lemah lawan gerombolan
 									   # supaya player bergantung pada chain reaction
 var player_invuln_time: float = 0.6    # kebal sesaat setelah kena hit (detik)
-var player_max_ammo: int = 5           # peluru yang dibawa. Habis peluru = berhenti menembak
+var player_max_ammo: int = 6           # peluru yang dibawa. Habis peluru = berhenti menembak
 									   # dan mulai MENGGIRING musuh — bukan hukuman, tapi
 									   # aba-aba ganti mode. Isi ulang hanya lewat pickup amunisi.
 
@@ -52,9 +52,12 @@ var heavy_contact_damage: int = 15     # sakit kalau kena tabrak
 # Ramp kesulitan utama = jarak antar cluster yang makin RAPAT seiring
 # waktu bertahan (dipercepat oleh skor). Awal: chain terkurung di satu
 # cluster. Late game: chain bisa melompat antar cluster.
-var cluster_spawn_interval: float = 9.0     # jeda spawn cluster baru (detik)
+var cluster_spawn_interval: float = 3.0     # jeda spawn cluster di awal (detik)
+var cluster_spawn_interval_min: float = 1.2 # jeda tercepat saat kesulitan penuh (ramp)
+var initial_spawn_delay: float = 1.0        # cluster PERTAMA muncul ~1 detik: player tidak
+											# pernah menunggu sasaran di awal permainan
 var cluster_swarm_min: int = 5              # jumlah swarm per cluster (acak min..max)
-var cluster_swarm_max: int = 13
+var cluster_swarm_max: int = 18
 var cluster_heavy_max: int = 1              # Heavy per cluster. Dibatasi 1 karena heavy_min_distance
 											# (250) melarang dua Heavy berdekatan — 2 Heavy dalam
 											# satu cluster akan saling ditolak sendiri.
@@ -73,7 +76,9 @@ var cluster_spacing_ramp: float = 60.0      # detik bertahan untuk mencapai spac
 var score_ramp_full: float = 12000.0        # skor juga mempercepat ramp (main bagus = tekanan naik)
 var heavy_start_time: float = 12.0          # Heavy baru ikut cluster setelah detik ini
 var asteroid_start_time: float = 6.0        # asteroid baru muncul setelah detik ini
-var max_enemies: int = 60                   # batas musuh di layar (jaga performa browser)
+var max_swarms_on_screen: int = 80          # batas SWARM hidup. Terpisah dari kuota Heavy
+											# & asteroid — kuota mereka penuh tidak boleh
+											# memperlambat spawn swarm sedikit pun.
 
 # ============ GAME OVER ============
 var game_over_slowmo_scale: float = 0.25     # slow-motion saat player mati
@@ -84,8 +89,9 @@ var asteroid_hp: int = 20                # 2 peluru
 var asteroid_speed_min: float = 30.0     # melayang pelan
 var asteroid_speed_max: float = 70.0
 var asteroid_contact_damage: int = 10    # damage saat menabrak player
-var asteroid_spawn_interval: float = 6.0 # jeda spawn asteroid (detik)
-var max_asteroids: int = 8               # batas asteroid di arena
+var asteroid_spawn_interval: float = 12.0 # jeda spawn asteroid (detik)
+var asteroid_max_on_screen: int = 4       # asteroid = alat yang dicari player, bukan sampah
+										 # layar. Kalau kuota penuh, spawn dilewati saja.
 
 # ============ ASTEROID FRAGMENT (pecahan) ============
 # Fragment = PEMBAWA chain antar cluster: terbang jauh, membunuh swarm
@@ -96,7 +102,7 @@ var max_asteroids: int = 8               # batas asteroid di arena
 var fragment_count: int = 6              # 6 pecahan, jarak sudut merata = 60 derajat
 var fragment_start_angle_deg: float = 0.0  # sudut pecahan pertama (0 = ke kanan), tetap
 var fragment_speed: float = 320.0        # jangkauan = speed x lifetime ≈ 448 px,
-var fragment_lifetime: float = 1.4       # cukup menjangkau cluster tetangga (spacing awal 400)
+var fragment_lifetime: float = 4       # cukup menjangkau cluster tetangga (spacing awal 400)
 var fragment_damage: int = 12            # membunuh swarm sehat (HP 10) sekali kena
 
 # ============ ABILITY PICKUP ============
@@ -111,8 +117,8 @@ var ability_max_on_field: int = 1             # hanya 1 pickup ability belum dia
 # JAUH lebih sering daripada pickup ability: ini ritme normal permainan.
 # Player boleh sengaja menunda mengambilnya karena sedang menyiapkan chain.
 var ammo_spawn_interval: float = 6.0     # jeda spawn pickup amunisi (detik)
-var ammo_max_on_field: int = 3           # pickup amunisi belum diambil, maksimal sekaligus
-var ammo_restore_amount: int = 5         # isi ulang penuh (= player_max_ammo)
+var ammo_max_on_field: int = 4           # pickup amunisi belum diambil, maksimal sekaligus
+var ammo_restore_amount: int = 8         # isi ulang penuh (= player_max_ammo)
 var pickup_edge_margin: float = 120.0    # jarak minimal pickup dari tepi arena
 
 # ============ SINGULARITY (pengumpul — TIDAK membunuh) ============
@@ -144,8 +150,14 @@ var nuke_flash_duration: float = 0.35     # lama kilat memudar (detik)
 # Musuh saling mendorong ringan supaya tidak menumpuk di 1 titik —
 # kaskade jadi terbaca sebagai rentetan, bukan satu kilatan.
 # Tanpa physics collision (terlalu mahal untuk build web).
-var separation_radius: float = 28.0        # jarak mulai saling dorong (pixel)
-var separation_weight: float = 1.2         # kekuatan dorong vs arah mengejar.
+# Jarak dorong dihitung dari UKURAN BADAN masing-masing, bukan satu angka
+# global. Dengan begitu swarm otomatis berhenti di LUAR badan Heavy yang
+# jauh lebih besar, bukan menempel di jarak yang sama seperti sesama swarm.
+var swarm_body_radius: float = 14.0        # radius badan swarm (swarm-swarm jadi ~30 px: tetap rapat)
+var heavy_body_radius: float = 60.0        # radius badan Heavy (sprite-nya ~74 px dari pusat)
+var asteroid_body_radius: float = 40.0     # radius badan asteroid (untuk jangkauan ledakan)
+var separation_padding: float = 2.0        # jarak renggang tambahan antar badan
+var separation_weight: float = 3         # kekuatan dorong vs arah mengejar.
 										   # Terlalu besar = gerombolan buyar dan
 										   # tidak bisa dikumpulkan — biarkan rapat.
 var separation_update_interval: int = 4    # hitung ulang tiap N frame physics (hemat CPU)
@@ -181,14 +193,15 @@ var shake_global_multiplier: float = 0.5
 var shake_max: float = 34.0              # batas shake saat banyak event bersamaan.
 										 # Dinaikkan supaya shake Nuke (30) tidak
 										 # ikut terpotong jadi selevel Heavy.
-var max_fx_nodes: int = 60               # batas node efek visual aktif (jaga performa)
+var max_fx_nodes: int = 100               # batas node efek visual aktif (jaga performa).
+										 # Dinaikkan dari 60: tiap kematian swarm kini
+										 # memakai 2 node (animasi + ring).
 
 var hit_flash_duration: float = 0.06     # kedip putih saat musuh kena peluru
 var hit_punch_amount: float = 1.15       # musuh membesar sesaat saat kena hit
 var hit_punch_duration: float = 0.12
 
-var shake_swarm_intensity: float = 2.0   # shake saat swarm mati
-var shake_swarm_duration: float = 0.1
+# (shake kematian swarm sengaja DIHAPUS — lihat komentar di chain_manager.gd)
 var shake_heavy_intensity: float = 12.0  # shake saat heavy meledak
 var shake_heavy_duration: float = 0.35
 var hitstop_heavy: float = 0.08          # freeze sesaat saat heavy meledak

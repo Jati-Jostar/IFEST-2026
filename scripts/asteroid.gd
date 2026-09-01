@@ -11,6 +11,7 @@ const CONTACT_RANGE := 34.0   # jarak pusat-ke-pusat "menabrak player"
 const EDGE_MARGIN := 20.0
 
 var hp: int = 20
+var body_radius: float = 40.0   # ukuran badan: ledakan dihitung sampai TEPI, bukan titik pusat
 var velocity: Vector2 = Vector2.ZERO
 var _spin: float = 0.0
 var _player: Node2D
@@ -21,6 +22,7 @@ var _player: Node2D
 func _ready() -> void:
 	add_to_group("asteroids")
 	hp = GameBalance.asteroid_hp
+	body_radius = GameBalance.asteroid_body_radius
 	_spin = randf_range(-1.2, 1.2)
 	_player = get_tree().get_first_node_in_group("player")
 	if velocity == Vector2.ZERO:

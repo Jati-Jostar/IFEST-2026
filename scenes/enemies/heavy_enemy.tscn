@@ -14,9 +14,9 @@ script = ExtResource("1_heavy")
 [node name="Visual" type="Node2D" parent="." unique_id=1733565762]
 
 [node name="Placeholder" type="Sprite2D" parent="Visual" unique_id=914470998]
-scale = Vector2(1.52, 1.52)
+scale = Vector2(2.315, 2.315)
 texture = ExtResource("2_n2l02")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=586706815]
-scale = Vector2(1.395, 1.395)
+scale = Vector2(3.035, 3.035)
 shape = SubResource("CircleShape2D_heavy")

@@ -31,6 +31,9 @@ var _invuln_left: float = 0.0
 var _is_dead: bool = false
 
 @onready var visual: Node2D = $Visual
+# Thruster opsional: dicari dengan aman supaya game tetap jalan kalau
+# artist menghapus atau mengganti namanya di dalam $Visual.
+@onready var thruster: AnimatedSprite2D = visual.get_node_or_null("Thruster")
 @onready var camera: Camera2D = $Camera2D
 
 
@@ -120,6 +123,9 @@ func _die() -> void:
 
 func _handle_movement() -> void:
 	var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	# Semburan thruster hanya menyala saat benar-benar bergerak.
+	if thruster != null:
+		thruster.visible = input_dir != Vector2.ZERO
 	var speed := speed_override if speed_override > 0.0 else GameBalance.player_speed
 	velocity = input_dir * speed
 	move_and_slide()

@@ -16,6 +16,8 @@ extends Node2D
 # Player ikut kena, tapi memakai nuke_self_damage terpisah (dikali
 # player_self_damage_multiplier) supaya Nuke tidak one-shot player.
 
+const EXPLOSION_NUKE := preload("res://scenes/fx/explosion_nuke.tscn")
+
 var _t: float = 0.0
 var _prev_radius: float = 0.0
 var _player_hit: bool = false
@@ -28,6 +30,7 @@ func _ready() -> void:
 	Juice.screen_flash(Color(1, 1, 1, 1),
 		GameBalance.nuke_flash_strength, GameBalance.nuke_flash_duration)
 	Juice.punch_zoom(GameBalance.nuke_zoom_punch, 0.3)
+	Juice.spawn_fx(EXPLOSION_NUKE, global_position)
 
 
 func _physics_process(delta: float) -> void:
@@ -45,21 +48,26 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 
 
-# Hapus semua objek yang jaraknya baru saja dilewati gelombang ring.
-# Kill oleh Nuke selalu depth 0 (Nuke pemicu chain, bukan sambungannya).
+# Hapus semua objek yang baru saja tersapu gelombang ring.
+# Jarak diukur sampai TEPI badan target (di-clamp minimal 0), bukan titik
+# pusatnya — objek besar seperti Heavy tetap tersapu begitu gelombang
+# menyentuh badannya, dan yang badannya menyelimuti titik ledak kena di
+# gelombang pertama. Kill oleh Nuke selalu depth 0.
 func _damage_band(from_r: float, to_r: float) -> void:
 	if to_r <= from_r:
 		return
 	for enemy in get_tree().get_nodes_in_group("enemies"):
-		if is_instance_valid(enemy):
-			var d := global_position.distance_to(enemy.global_position)
-			if d > from_r and d <= to_r:
-				enemy.take_damage(GameBalance.nuke_damage, "nuke", 0)
+		var e := enemy as EnemyBase
+		if e != null:
+			var d := maxf(global_position.distance_to(e.global_position) - e.body_radius, 0.0)
+			if d >= from_r and d <= to_r:
+				e.take_damage(GameBalance.nuke_damage, "nuke", 0)
 	for asteroid in get_tree().get_nodes_in_group("asteroids"):
-		if is_instance_valid(asteroid):
-			var d := global_position.distance_to(asteroid.global_position)
-			if d > from_r and d <= to_r:
-				asteroid.take_damage(GameBalance.nuke_damage, "nuke", 0)
+		var a := asteroid as Node2D
+		if a != null:
+			var d := maxf(global_position.distance_to(a.global_position) - a.body_radius, 0.0)
+			if d >= from_r and d <= to_r:
+				a.take_damage(GameBalance.nuke_damage, "nuke", 0)
 	if not _player_hit:
 		var player: Node2D = get_tree().get_first_node_in_group("player")
 		if player != null and is_instance_valid(player) and player.has_method("take_damage"):

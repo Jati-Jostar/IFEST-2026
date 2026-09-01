@@ -6,6 +6,7 @@ extends EnemyBase
 
 func _setup_stats() -> void:
 	enemy_type = "swarm"
+	body_radius = GameBalance.swarm_body_radius
 	max_hp = GameBalance.swarm_hp
 	speed = GameBalance.swarm_speed
 	contact_damage = GameBalance.swarm_contact_damage

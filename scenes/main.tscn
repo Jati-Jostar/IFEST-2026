@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://4r48nrwckjic"]
 
 [ext_resource type="Script" uid="uid://dk48ghe54us8c" path="res://scripts/main.gd" id="1_main"]
-[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://3j2lx0pt677" path="res://scenes/player.tscn" id="2_player"]
 [ext_resource type="Script" uid="uid://c1oov2so3i3wn" path="res://scripts/star_field.gd" id="3_stars"]
 [ext_resource type="Script" uid="uid://hk65yxbgd0ju" path="res://scripts/chain_manager.gd" id="4_chain"]
 [ext_resource type="PackedScene" path="res://scenes/ui.tscn" id="5_ui"]

@@ -20,6 +20,7 @@ var max_hp: int = 10
 var speed: float = 100.0
 var contact_damage: int = 5
 var contact_range: float = 26.0          # jarak pusat-ke-pusat yang dihitung "menyentuh player"
+var body_radius: float = 14.0            # ukuran badan untuk jarak anti-tumpuk (diisi subclass)
 var death_audio_event: String = "swarm_death"
 
 var hp: int = 1
@@ -37,6 +38,8 @@ func _ready() -> void:
 	_setup_stats()
 	if enemy_type == "heavy":
 		add_to_group("heavies")   # dipakai spawner untuk membatasi jumlah & jarak antar-Heavy
+	else:
+		add_to_group("swarms")    # kuota swarm dihitung terpisah dari Heavy
 	if hp_override > 0:
 		max_hp = hp_override
 	if speed_override > 0.0:
@@ -69,10 +72,36 @@ func _physics_process(delta: float) -> void:
 	# Visual tetap menghadap player (arah niat), bukan arah geser separation.
 	visual.rotation = chase_dir.angle() + PI / 2.0
 
+	# Jaminan keras: swarm tidak boleh berada DI DALAM badan Heavy.
+	# Gaya dorong saja kadang kalah oleh dorongan mengejar player, dan
+	# kalau swarm tembus ke dalam Heavy, animasi kematian/ledakannya
+	# tertutup badan Heavy. Di sini posisinya didorong balik ke tepi.
+	if enemy_type != "heavy":
+		_push_out_of_heavies()
+
 	# Contact damage pakai cek jarak sederhana; invuln window player
 	# yang mencegah damage beruntun tiap frame.
 	if to_player.length() < contact_range and _player.has_method("take_damage"):
 		_player.take_damage(contact_damage)
+
+
+# Dorong keluar kalau tumpang tindih dengan badan Heavy. Heavy jumlahnya
+# dibatasi (heavy_max_on_screen), jadi loop ini murah.
+func _push_out_of_heavies() -> void:
+	for h in get_tree().get_nodes_in_group("heavies"):
+		var heavy := h as EnemyBase
+		if heavy == null or heavy == self:
+			continue
+		var min_dist := heavy.body_radius + body_radius
+		var diff := global_position - heavy.global_position
+		var dist := diff.length()
+		if dist >= min_dist:
+			continue
+		if dist < 0.01:
+			# Persis di titik yang sama: pilih arah keluar acak.
+			diff = Vector2.RIGHT.rotated(randf() * TAU)
+			dist = 1.0
+		global_position = heavy.global_position + diff / dist * min_dist
 
 
 # Satu loop untuk dua hal (hemat CPU):
@@ -81,7 +110,6 @@ func _physics_process(delta: float) -> void:
 func _update_separation() -> void:
 	_separation = Vector2.ZERO
 	_cohesion = Vector2.ZERO
-	var radius: float = GameBalance.separation_radius
 	var centroid := Vector2.ZERO
 	var members := 0
 	for other in get_tree().get_nodes_in_group("enemies"):
@@ -93,15 +121,25 @@ func _update_separation() -> void:
 		if cluster_id >= 0 and node.cluster_id == cluster_id:
 			centroid += node.global_position
 			members += 1
+
+		# Heavy tidak terdorong oleh swarm — dia menerjang, swarm yang
+		# mengalir menghindarinya. Antar-Heavy tetap saling mendorong.
+		if enemy_type == "heavy" and node.enemy_type != "heavy":
+			continue
+
+		# Jarak minimal dihitung dari ukuran badan KEDUANYA, jadi
+		# swarm berhenti di luar badan Heavy tanpa merenggangkan
+		# jarak antar sesama swarm.
+		var min_dist := body_radius + node.body_radius + GameBalance.separation_padding
 		var diff := global_position - node.global_position
 		var dist := diff.length()
-		if dist >= radius:
+		if dist >= min_dist:
 			continue
 		if dist < 1.0:
 			# Persis bertumpuk: dorong ke arah acak supaya bisa terpisah.
 			_separation += Vector2.RIGHT.rotated(randf() * TAU)
 		else:
-			_separation += diff.normalized() * (1.0 - dist / radius)
+			_separation += diff.normalized() * (1.0 - dist / min_dist)
 	if members > 0:
 		_cohesion = (centroid / float(members) - global_position).normalized()
 

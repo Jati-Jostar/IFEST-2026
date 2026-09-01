@@ -11,7 +11,7 @@ const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
 const PICKUP_SCENE := preload("res://scenes/abilities/ability_pickup.tscn")
 const AMMO_PICKUP_SCENE := preload("res://scenes/abilities/ammo_pickup.tscn")
 
-var _cluster_timer: float = 1.5  # cluster pertama muncul cepat
+var _cluster_timer: float = 0.0  # diisi initial_spawn_delay di _ready
 var _asteroid_timer: float = 0.0
 var _pickup_timer: float = 8.0   # drop pertama cepat supaya player segera kenal ability
 var _next_pickup_is_singularity: bool = true
@@ -61,6 +61,8 @@ func _ready() -> void:
 	# Cegah efek "meluncur" di frame pertama setelah player dipindah paksa.
 	player.reset_physics_interpolation()
 
+	_cluster_timer = GameBalance.initial_spawn_delay
+
 
 func _process(delta: float) -> void:
 	if _game_over:
@@ -68,7 +70,7 @@ func _process(delta: float) -> void:
 	_elapsed += delta
 	_cluster_timer -= delta
 	if _cluster_timer <= 0.0:
-		_cluster_timer = GameBalance.cluster_spawn_interval
+		_cluster_timer = _current_cluster_interval()
 		_try_spawn_cluster()
 	if _elapsed >= GameBalance.asteroid_start_time:
 		_asteroid_timer -= delta
@@ -106,7 +108,7 @@ func _on_player_died() -> void:
 # ---------------- CLUSTER SPAWNING ----------------
 
 func _try_spawn_cluster() -> void:
-	if _enemy_count() >= GameBalance.max_enemies:
+	if _swarm_count() >= GameBalance.max_swarms_on_screen:
 		return
 	var center := _find_cluster_center()
 	var cid := _next_cluster_id
@@ -120,8 +122,7 @@ func _try_spawn_cluster() -> void:
 			and randf() < GameBalance.cluster_heavy_chance \
 			and _can_spawn_heavy_at(center):
 		for i in GameBalance.cluster_heavy_max:
-			if _enemy_count() >= GameBalance.max_enemies:
-				return
+			# Kuota Heavy penuh: lewati Heavy saja, JANGAN batalkan swarm-nya.
 			if _heavy_count() >= GameBalance.heavy_max_on_screen:
 				break
 			var heavy_off := Vector2.RIGHT.rotated(randf() * TAU) * randf_range(0.0, 40.0)
@@ -131,7 +132,7 @@ func _try_spawn_cluster() -> void:
 	# bukan menumpuk di 1 titik; separation langsung merapikan sisanya.
 	var swarm_count := randi_range(GameBalance.cluster_swarm_min, GameBalance.cluster_swarm_max)
 	for i in swarm_count:
-		if _enemy_count() >= GameBalance.max_enemies:
+		if _swarm_count() >= GameBalance.max_swarms_on_screen:
 			return
 		var off := Vector2.RIGHT.rotated(randf() * TAU) \
 			* randf_range(25.0, GameBalance.cluster_spawn_radius)
@@ -147,8 +148,8 @@ func _spawn_one(scene: PackedScene, pos: Vector2, cid: int) -> void:
 	enemy.reset_physics_interpolation()
 
 
-func _enemy_count() -> int:
-	return get_tree().get_nodes_in_group("enemies").size()
+func _swarm_count() -> int:
+	return get_tree().get_nodes_in_group("swarms").size()
 
 
 func _heavy_count() -> int:
@@ -166,13 +167,24 @@ func _can_spawn_heavy_at(pos: Vector2) -> bool:
 	return true
 
 
+# Kesulitan 0..1 dari waktu bertahan + total skor.
+func _difficulty() -> float:
+	var t_time: float = _elapsed / GameBalance.cluster_spacing_ramp
+	var t_score: float = float(chain_manager.score) / GameBalance.score_ramp_full
+	return clampf(t_time + t_score, 0.0, 1.0)
+
+
 # Jarak minimal antar cluster: mulai renggang, makin rapat seiring waktu
 # bertahan + skor. Late game chain bisa melompat antar cluster.
 func _current_cluster_spacing() -> float:
-	var t_time: float = _elapsed / GameBalance.cluster_spacing_ramp
-	var t_score: float = float(chain_manager.score) / GameBalance.score_ramp_full
-	var t := clampf(t_time + t_score, 0.0, 1.0)
-	return lerpf(GameBalance.cluster_spacing_start, GameBalance.cluster_spacing_end, t)
+	return lerpf(GameBalance.cluster_spacing_start, GameBalance.cluster_spacing_end, _difficulty())
+
+
+# Jeda spawn cluster ikut memendek seiring kesulitan — kepadatan naik
+# di atas ramp jarak antar cluster.
+func _current_cluster_interval() -> float:
+	return lerpf(
+		GameBalance.cluster_spawn_interval, GameBalance.cluster_spawn_interval_min, _difficulty())
 
 
 # Cari titik tepi yang berjarak >= spacing dari semua musuh hidup.
@@ -213,7 +225,7 @@ func _random_edge_position() -> Vector2:
 # ---------------- ASTEROID & PICKUP ----------------
 
 func _try_spawn_asteroid() -> void:
-	if get_tree().get_nodes_in_group("asteroids").size() >= GameBalance.max_asteroids:
+	if get_tree().get_nodes_in_group("asteroids").size() >= GameBalance.asteroid_max_on_screen:
 		return
 	var asteroid := ASTEROID_SCENE.instantiate()
 	var pos := _random_edge_position()

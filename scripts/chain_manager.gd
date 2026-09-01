@@ -13,6 +13,9 @@ extends Node
 #  membuat chain terasa spesial saat damage MENJALAR antar objek.
 # =====================================================================
 
+const EXPLOSION_SMALL := preload("res://scenes/fx/explosion_small.tscn")
+const EXPLOSION_HEAVY := preload("res://scenes/fx/explosion_heavy.tscn")
+
 signal score_changed(score: int)
 signal chain_changed(count: int)
 signal chain_ended(final_count: int, highest: int)
@@ -49,6 +52,7 @@ func on_enemy_died(enemy_type: String, pos: Vector2, killed_by: String, depth: i
 	if enemy_type == "heavy":
 		# Ledakan Heavy MENGABAIKAN decay: damage penuh, depth di-reset ke 0.
 		# Inilah alat "recharge" chain yang sedang sekarat.
+		Juice.spawn_fx(EXPLOSION_HEAVY, pos)
 		Juice.spawn_ring(pos, GameBalance.heavy_explosion_radius, Color(1.0, 0.6, 0.2, 1.0), 0.4)
 		Juice.shake(GameBalance.shake_heavy_intensity, GameBalance.shake_heavy_duration)
 		Juice.hitstop(GameBalance.hitstop_heavy)
@@ -56,8 +60,13 @@ func on_enemy_died(enemy_type: String, pos: Vector2, killed_by: String, depth: i
 		_schedule_explosion(pos, GameBalance.heavy_explosion_radius,
 			GameBalance.heavy_explosion_damage, 0)
 	else:
+		# Animasi ledakan (sprite) + ring kode: dua lapis, masing-masing
+		# bisa diatur sendiri. Artist cukup mengganti SpriteFrames-nya.
+		Juice.spawn_fx(EXPLOSION_SMALL, pos)
 		Juice.spawn_ring(pos, GameBalance.swarm_death_burst_radius, Color(1.0, 0.45, 0.35, 1.0), 0.25)
-		Juice.shake(GameBalance.shake_swarm_intensity, GameBalance.shake_swarm_duration)
+		# SENGAJA tanpa screen shake: dengan puluhan swarm mati per detik,
+		# shake kecil terus-menerus bikin pusing dan menenggelamkan momen
+		# besar. Shake disimpan untuk Heavy, Nuke, asteroid, dan player kena.
 		# Burst swarm meluruh sesuai kedalaman; berhenti di cap atau saat
 		# damage-nya habis termakan decay.
 		if depth < GameBalance.chain_max_depth:
@@ -118,14 +127,19 @@ func _end_chain() -> void:
 func _schedule_explosion(pos: Vector2, radius: float, damage: int, next_depth: int) -> void:
 	await get_tree().create_timer(GameBalance.chain_stagger).timeout
 
+	# Jarak diukur sampai TEPI badan target, bukan titik pusatnya. Tanpa ini
+	# objek besar seperti Heavy jadi kebal: swarm berhenti di luar badannya,
+	# jadi pusat Heavy selalu di luar jangkauan burst.
 	for enemy in get_tree().get_nodes_in_group("enemies"):
-		if is_instance_valid(enemy) and enemy.global_position.distance_to(pos) <= radius:
-			enemy.take_damage(damage, "chain", next_depth)
+		var e := enemy as EnemyBase
+		if e != null and e.global_position.distance_to(pos) - e.body_radius <= radius:
+			e.take_damage(damage, "chain", next_depth)
 
 	# Asteroid juga ikut rusak oleh ledakan -> bisa memuntahkan fragment.
 	for asteroid in get_tree().get_nodes_in_group("asteroids"):
-		if is_instance_valid(asteroid) and asteroid.global_position.distance_to(pos) <= radius:
-			asteroid.take_damage(damage, "chain", next_depth)
+		var a := asteroid as Node2D
+		if a != null and a.global_position.distance_to(pos) - a.body_radius <= radius:
+			a.take_damage(damage, "chain", next_depth)
 
 	# Player ikut kena, tapi dikali self-damage multiplier (default 0.35).
 	var player: Node2D = get_tree().get_first_node_in_group("player")

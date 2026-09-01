@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://dql2c664jw7f0"]
+
+[ext_resource type="Script" uid="uid://baog2n50ms3vv" path="res://scripts/explosion_anim.gd" id="1_anim"]
+[ext_resource type="Texture2D" uid="uid://bq7412r8gg1b8" path="res://assets/sprites/Nuclear-Frame-Animation/nuclear_0001.png" id="f1"]
+[ext_resource type="Texture2D" uid="uid://dxdpdv7rc0mjl" path="res://assets/sprites/Nuclear-Frame-Animation/nuclear_0002.png" id="f2"]
+[ext_resource type="Texture2D" uid="uid://bwofv0mxth68r" path="res://assets/sprites/Nuclear-Frame-Animation/nuclear_0003.png" id="f3"]
+[ext_resource type="Texture2D" uid="uid://b3awuc7gj3eq7" path="res://assets/sprites/Nuclear-Frame-Animation/nuclear_0004.png" id="f4"]
+[ext_resource type="Texture2D" uid="uid://ccudnjvs6nnpg" path="res://assets/sprites/Nuclear-Frame-Animation/nuclear_0005.png" id="f5"]
+[ext_resource type="Texture2D" uid="uid://bkesm655xg5cr" path="res://assets/sprites/Nuclear-Frame-Animation/nuclear_0006.png" id="f6"]
+[ext_resource type="Texture2D" uid="uid://6vxmd5h7imeb" path="res://assets/sprites/Nuclear-Frame-Animation/nuclear_0007.png" id="f7"]
+
+[sub_resource type="SpriteFrames" id="frames"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("f1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("f7")
+}],
+"loop": 0,
+"name": &"explode",
+"speed": 20.0
+}]
+
+[node name="ExplosionHeavy" type="Node2D" unique_id=127935591]
+script = ExtResource("1_anim")
+frame_count = 7
+visual_scale = 1.19
+
+[node name="Anim" type="AnimatedSprite2D" parent="." unique_id=128043640]
+texture_filter = 1
+sprite_frames = SubResource("frames")
+animation = &"explode"

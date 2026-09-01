@@ -2,6 +2,38 @@
 
 [ext_resource type="Script" uid="uid://c27u8eq0cyadf" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="Texture2D" uid="uid://70mlv3t3sdw" path="res://assets/sprites/Ship.png" id="2_g2els"]
+[ext_resource type="Texture2D" uid="uid://cythurm2scuno" path="res://assets/sprites/Trushter/thruster_0002.png" id="3_smehm"]
+[ext_resource type="Texture2D" uid="uid://1tl1tx52gxc0" path="res://assets/sprites/Trushter/thruster_0001.png" id="3_thr1"]
+[ext_resource type="Texture2D" uid="uid://wccbln4frmcv" path="res://assets/sprites/Trushter/thruster_0003.png" id="4_thr2"]
+[ext_resource type="Texture2D" uid="uid://csqh6nwln38kr" path="res://assets/sprites/Trushter/thruster_0004.png" id="5_thr3"]
+[ext_resource type="Texture2D" uid="uid://bg8657cejhian" path="res://assets/sprites/Trushter/thruster_0005.png" id="6_thr4"]
+[ext_resource type="Texture2D" uid="uid://dgakpshamukxu" path="res://assets/sprites/Trushter/thruster_0006.png" id="7_thr5"]
+
+[sub_resource type="SpriteFrames" id="frames_thruster"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_thr1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_smehm")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_thr2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_thr3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_thr4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_thr5")
+}],
+"loop": 1,
+"name": &"thrust",
+"speed": 5.0
+}]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player"]
 radius = 14.0
@@ -12,6 +44,16 @@ motion_mode = 1
 script = ExtResource("1_player")
 
 [node name="Visual" type="Node2D" parent="." unique_id=581974739]
+
+[node name="Thruster" type="AnimatedSprite2D" parent="Visual" unique_id=685194267]
+z_index = -1
+texture_filter = 1
+position = Vector2(0, 10)
+scale = Vector2(0.5703125, 0.57031244)
+sprite_frames = SubResource("frames_thruster")
+animation = &"thrust"
+autoplay = "thrust"
+frame_progress = 0.37482128
 
 [node name="Placeholder" type="Sprite2D" parent="Visual" unique_id=2027996669]
 texture = ExtResource("2_g2els")

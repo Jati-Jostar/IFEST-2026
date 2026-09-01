@@ -19,6 +19,13 @@ func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 	body_entered.connect(_on_body_entered)
 
+	# Pilih satu varian tampilan secara acak, sembunyikan sisanya.
+	var variants := visual.get_children()
+	if variants.size() > 0:
+		var pick := randi() % variants.size()
+		for i in variants.size():
+			variants[i].visible = (i == pick)
+
 
 func _physics_process(delta: float) -> void:
 	global_position += velocity * delta
