@@ -1,9 +1,11 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ability_pickup.gd" id="1_pickup"]
+[ext_resource type="Texture2D" uid="uid://cev0et68hw2so" path="res://assets/sprites/icon_singularity.png" id="2_sing"]
+[ext_resource type="Texture2D" uid="uid://dfdevaep76el7" path="res://assets/sprites/icon_nuclear.png" id="3_nuke"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_pickup"]
-radius = 16.0
+radius = 28.0
 
 [node name="AbilityPickup" type="Area2D"]
 collision_layer = 16
@@ -12,9 +14,14 @@ script = ExtResource("1_pickup")
 
 [node name="Visual" type="Node2D" parent="."]
 
-[node name="Placeholder" type="Polygon2D" parent="Visual"]
-color = Color(1, 1, 1, 1)
-polygon = PackedVector2Array(-11, -11, 11, -11, 11, 11, -11, 11)
+[node name="IconSingularity" type="Sprite2D" parent="Visual"]
+texture_filter = 1
+texture = ExtResource("2_sing")
+
+[node name="IconNuke" type="Sprite2D" parent="Visual"]
+visible = false
+texture_filter = 1
+texture = ExtResource("3_nuke")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_pickup")

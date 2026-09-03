@@ -1,12 +1,74 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://chpswsne5b6ny"]
 
-[ext_resource type="Script" path="res://scripts/singularity.gd" id="1_singularity"]
+[ext_resource type="Script" uid="uid://ycwb6wctovr3" path="res://scripts/singularity.gd" id="1_singularity"]
+[ext_resource type="Texture2D" uid="uid://0jyuuwe0xm2d" path="res://assets/sprites/Singularity-Frame-Animation/singularity_0001.png" id="s1"]
+[ext_resource type="Texture2D" uid="uid://bkshj4mwyf1fv" path="res://assets/sprites/Singularity-Frame-Animation/singularity_0002.png" id="s2"]
+[ext_resource type="Texture2D" uid="uid://crx5j6y4t50ul" path="res://assets/sprites/Singularity-Frame-Animation/singularity_0003.png" id="s3"]
+[ext_resource type="Texture2D" uid="uid://dbprl27pa1pab" path="res://assets/sprites/Singularity-Frame-Animation/singularity_0004.png" id="s4"]
+[ext_resource type="Texture2D" uid="uid://drts1h6boqsx" path="res://assets/sprites/Singularity-Frame-Animation/singularity_0005.png" id="s5"]
+[ext_resource type="Texture2D" uid="uid://ckhuffmwukxi6" path="res://assets/sprites/Singularity-Frame-Animation/singularity_0006.png" id="s6"]
+[ext_resource type="Texture2D" uid="uid://b71np4dccsrhi" path="res://assets/sprites/Singularity-Frame-Animation/singularity_0007.png" id="s7"]
+[ext_resource type="Texture2D" uid="uid://46jm36xt6ynu" path="res://assets/sprites/Singularity-Frame-Animation/singularity_0008.png" id="s8"]
 
-[node name="Singularity" type="Node2D"]
+[sub_resource type="SpriteFrames" id="frames_singularity"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("s1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("s2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("s3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("s4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("s5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("s6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("s7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("s8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("s7")
+}, {
+"duration": 1.0,
+"texture": ExtResource("s6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("s5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("s4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("s3")
+}],
+"loop": 1,
+"name": &"pull",
+"speed": 8.0
+}]
+
+[node name="Singularity" type="Node2D" unique_id=650481708]
+z_index = -1
+scale = Vector2(1.435, 1.435)
 script = ExtResource("1_singularity")
 
-[node name="Visual" type="Node2D" parent="."]
+[node name="Visual" type="Node2D" parent="." unique_id=829378117]
 
-[node name="Placeholder" type="Polygon2D" parent="Visual"]
-color = Color(0.55, 0.2, 0.85, 1)
-polygon = PackedVector2Array(16, 0, 11.3, 11.3, 0, 16, -11.3, 11.3, -16, 0, -11.3, -11.3, 0, -16, 11.3, -11.3)
+[node name="Anim" type="AnimatedSprite2D" parent="Visual" unique_id=862109397]
+texture_filter = 1
+position = Vector2(-1.3937149, -2.787468)
+scale = Vector2(4.0540953, 4.0540953)
+sprite_frames = SubResource("frames_singularity")
+animation = &"pull"
+autoplay = "pull"
+frame_progress = 0.64041024

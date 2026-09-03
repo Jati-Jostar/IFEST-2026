@@ -1,17 +1,14 @@
 extends PickupBase
 
-# Pickup amunisi: kotak ABU-ABU, sengaja dibedakan dari pickup ability
-# (biru/kuning) lewat warna DAN bentuk (memanjang, bukan bujur sangkar).
-# Jauh lebih sering muncul daripada ability — ini bagian dari ritme
-# normal permainan, bukan senjata langka.
-# Selalu berhasil diambil dan langsung mengisi magasin sampai penuh.
-
-const COLOR_AMMO := Color(0.72, 0.74, 0.78)
+# Pickup amunisi (ikon peluru). Jauh lebih sering muncul daripada
+# pickup ability — ini bagian dari ritme normal permainan, bukan
+# senjata langka. Selalu berhasil diambil dan langsung mengisi magasin.
 
 
 func _setup() -> void:
 	pickup_group = "ammo_pickups"
-	pickup_color = COLOR_AMMO
+	# Ikon sudah berwarna sendiri — tidak perlu tint dari PickupBase.
+	pickup_color = Color.WHITE
 
 
 func _on_collected(player: Node2D) -> bool:

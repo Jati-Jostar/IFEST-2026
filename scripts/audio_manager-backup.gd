@@ -65,12 +65,3 @@ func play(event_name: String, _position: Vector2 = Vector2.ZERO, pitch: float = 
 	# antar event, jadi jangan sampai volume event sebelumnya terbawa.
 	p.volume_db = linear_to_db(volumes.get(event_name, 1.0))
 	p.play()
-	
-func stop(event_name: String) -> void:
-	# Hentikan semua player yang sedang memutar stream event ini.
-	var stream: AudioStream = streams.get(event_name)
-	if stream == null:
-		return
-	for p in _players:
-		if p.playing and p.stream == stream:
-			p.stop()

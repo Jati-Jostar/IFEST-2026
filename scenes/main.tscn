@@ -5,11 +5,20 @@
 [ext_resource type="Script" uid="uid://c1oov2so3i3wn" path="res://scripts/star_field.gd" id="3_stars"]
 [ext_resource type="Script" uid="uid://hk65yxbgd0ju" path="res://scripts/chain_manager.gd" id="4_chain"]
 [ext_resource type="PackedScene" path="res://scenes/ui.tscn" id="5_ui"]
+[ext_resource type="Texture2D" uid="uid://cdr14mu3a1amc" path="res://assets/sprites/Background.png" id="6_bg"]
 
 [node name="Main" type="Node2D" unique_id=1823519118]
 script = ExtResource("1_main")
 
+[node name="Background" type="Sprite2D" parent="."]
+z_index = -3
+position = Vector2(800, 450)
+texture_filter = 1
+texture = ExtResource("6_bg")
+
 [node name="StarField" type="Node2D" parent="." unique_id=1720246038]
+visible = false
+z_index = -2
 script = ExtResource("3_stars")
 
 [node name="ArenaBorder" type="Line2D" parent="." unique_id=944772536]

@@ -125,7 +125,7 @@ var pickup_edge_margin: float = 120.0    # jarak minimal pickup dari tepi arena
 var singularity_radius: float = 240.0     # jangkauan tarikan
 var singularity_pull_min: float = 60.0    # kecepatan tarik di tepi radius (pixel/detik)
 var singularity_pull_max: float = 480.0   # kecepatan tarik di dekat pusat
-var singularity_duration: float = 2.5     # lama aktif (detik)
+var singularity_duration: float = 1.5     # lama aktif (detik)
 
 # ============ NUKE (detonator — pemicu chain) ============
 var nuke_radius: float = 280.0

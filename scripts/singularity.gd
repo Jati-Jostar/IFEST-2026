@@ -4,12 +4,13 @@ extends Node2D
 # fragment ke pusatnya. TIDAK men-damage apa pun, TIDAK menarik player.
 # Saat habis: objek berhenti ditarik, tetap di posisinya, tanpa ledakan.
 # Tarikan makin kuat makin dekat ke pusat (tanpa fisika rumit).
+#
+# Seluruh tampilannya sekarang berasal dari animasi sprite di $Visual —
+# tidak ada lagi lingkaran/garis yang digambar lewat kode.
 
 const PULL_GROUPS: Array[String] = ["enemies", "asteroids", "fragments"]
-const LINE_COUNT := 10   # garis radial samar yang "mengalir" ke pusat
 
 var _time_left: float = 2.5
-var _line_angle: float = 0.0
 var _shake_timer: float = 0.0
 
 @onready var visual: Node2D = $Visual
@@ -23,6 +24,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	_time_left -= delta
 	if _time_left <= 0.0:
+		AudioManager.stop("singularity_activate")
 		queue_free()
 		return
 
@@ -30,8 +32,6 @@ func _physics_process(delta: float) -> void:
 	visual.rotation += 1.2 * delta
 	var pulse := 1.0 + 0.12 * sin(Time.get_ticks_msec() / 1000.0 * 9.0)
 	visual.scale = Vector2.ONE * pulse
-	_line_angle += 0.5 * delta
-	queue_redraw()
 
 	# Getaran halus terus-menerus selama aktif — menjual rasa "gravitasi".
 	_shake_timer -= delta
@@ -59,15 +59,3 @@ func _pull_objects(delta: float) -> void:
 				GameBalance.singularity_pull_min,
 				dist / radius)
 			node.global_position += to_center.normalized() * pull_speed * delta
-
-
-# Efek area (lingkaran radius + garis konvergen) digambar di root sebagai
-# FX murni — inti visual yang akan diganti artist tetap ada di $Visual.
-func _draw() -> void:
-	var radius := GameBalance.singularity_radius
-	var fade := clampf(_time_left / 0.4, 0.0, 1.0)  # memudar menjelang habis
-	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 64, Color(0.7, 0.3, 1.0, 0.25 * fade), 2.0)
-	for i in LINE_COUNT:
-		var a := _line_angle + TAU * float(i) / float(LINE_COUNT)
-		var dir := Vector2.RIGHT.rotated(a)
-		draw_line(dir * radius, dir * 26.0, Color(0.7, 0.3, 1.0, 0.12 * fade), 2.0)
