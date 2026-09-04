@@ -95,6 +95,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _on_player_died() -> void:
 	_game_over = true
+	# Hook tetap dipasang walau slot audionya sengaja kosong (lihat
+	# audio_manager.gd) — aman dipanggil, dan siap kalau nanti diisi.
 	AudioManager.play("game_over")
 	# Slow-motion sesaat, lalu layar game over fade in.
 	Juice.base_time_scale = GameBalance.game_over_slowmo_scale
