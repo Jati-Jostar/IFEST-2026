@@ -23,6 +23,9 @@ signal chain_ended(final_count: int, highest: int)
 var score: int = 0
 var chain_count: int = 0
 var highest_chain: int = 0
+# Teks milestone (GREAT!/AMAZING!/INSANE!) muncul di TENGAH layar.
+# Dimatikan di demo menu supaya tidak menimpa judul & teks menu.
+var show_milestones: bool = true
 
 var _chain_time_left: float = 0.0
 
@@ -102,7 +105,7 @@ func _increment_chain(pos: Vector2) -> void:
 		Juice.floating_text(pos, "x%d" % chain_count, _chain_color(chain_count), size)
 
 	# Milestone: perayaan ekstra di tengah layar.
-	if chain_count == 10 or chain_count == 20 or chain_count == 30:
+	if show_milestones and (chain_count == 10 or chain_count == 20 or chain_count == 30):
 		Juice.shake(8.0, 0.3)
 		var msg := "GREAT!"
 		if chain_count == 20:

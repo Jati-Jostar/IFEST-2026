@@ -83,6 +83,7 @@ var max_swarms_on_screen: int = 80          # batas SWARM hidup. Terpisah dari k
 # ============ GAME OVER ============
 var game_over_slowmo_scale: float = 0.25     # slow-motion saat player mati
 var game_over_slowmo_time: float = 1.0       # lama slow-motion (detik real)
+var gameover_fade_time: float = 0.4          # fade layar saat pindah game over -> menu
 
 # ============ ASTEROID (objek netral abu-abu) ============
 var asteroid_hp: int = 20                # 2 peluru
@@ -211,3 +212,27 @@ var shake_player_hit_duration: float = 0.15
 
 var shake_asteroid_intensity: float = 5.0  # shake saat asteroid pecah
 var shake_asteroid_duration: float = 0.2
+
+# ============ AUDIO (volume bus) ============
+# Musik & SFX punya bus terpisah (lihat panel Audio di bawah editor).
+# Musik HARUS jauh lebih pelan dari SFX — ledakan chain adalah bintangnya,
+# musik hanya suasana. 0 dB = volume asli, -6 dB ≈ setengah terasa.
+var music_volume_db: float = -14.0
+var sfx_volume_db: float = 0.0
+var music_fade_in_time: float = 1.5      # detik musik naik perlahan saat mulai
+var music_fade_out_time: float = 1.0     # detik musik turun saat stop_music()
+
+# ============ MAIN MENU ============
+var menu_prompt_pulse_time: float = 0.8  # detik satu denyut "TEKAN SPACE UNTUK MULAI"
+var menu_input_delay: float = 0.3        # jeda awal sebelum menu menerima tombol
+										 # (cegah tombol R/ESC dari game over ikut
+										 # langsung memulai game lagi)
+
+# ============ MAIN MENU — DEMO LATAR ============
+# Di belakang menu, game berjalan sendiri tanpa player (mode demo).
+var menu_demo_dim: float = 0.45           # 0 = demo tak terlihat, 1 = terang penuh
+var menu_demo_chain_interval: float = 4.0 # detik antar chain otomatis
+var menu_demo_camera_zoom: float = 0.8    # < 1 = zoom out (lihat arena lebih luas)
+var menu_demo_wander_radius: float = 260.0 # seberapa jauh titik kumpul musuh berkeliling
+var menu_demo_wander_speed: float = 60.0  # kecepatan titik kumpul (px/detik)
+var menu_demo_sfx_volume_db: float = -10.0 # SFX demo lebih pelan dari saat bermain

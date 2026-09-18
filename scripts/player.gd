@@ -37,8 +37,14 @@ var _is_dead: bool = false
 @onready var camera: Camera2D = $Camera2D
 
 
+var _shoot_locked: bool = false
+
+
 func _ready() -> void:
 	add_to_group("player")
+	# Space yang dipakai untuk mulai dari menu mungkin masih tertahan —
+	# jangan sampai langsung membuang peluru. Tunggu dilepas dulu.
+	_shoot_locked = Input.is_action_pressed("shoot")
 	hp = GameBalance.player_max_hp
 	ammo = GameBalance.player_max_ammo
 	# Kamera tidak boleh memperlihatkan area di luar arena.
@@ -144,6 +150,9 @@ func _handle_aim() -> void:
 
 func _handle_shooting(delta: float) -> void:
 	_fire_cooldown -= delta
+	if _shoot_locked:
+		_shoot_locked = Input.is_action_pressed("shoot")
+		return
 	if not Input.is_action_pressed("shoot"):
 		return
 	# Peluru habis = tidak bisa menembak sama sekali. Isi ulang hanya

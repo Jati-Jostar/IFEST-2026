@@ -10,6 +10,13 @@ const HEAVY_SCENE := preload("res://scenes/enemies/heavy_enemy.tscn")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
 const PICKUP_SCENE := preload("res://scenes/abilities/ability_pickup.tscn")
 const AMMO_PICKUP_SCENE := preload("res://scenes/abilities/ammo_pickup.tscn")
+const MENU_SCENE := "res://scenes/main_menu.tscn"
+
+# Mode demo: scene ini juga dipakai sebagai latar hidup di main menu.
+# Tanpa player, tanpa HUD, tanpa input, tanpa pickup. Musuh mengejar
+# titik tak terlihat yang berkeliling pelan, dan sesekali satu swarm
+# di kerumunan terpadat diledakkan otomatis supaya chain terlihat.
+@export var demo_mode: bool = false
 
 var _cluster_timer: float = 0.0  # diisi initial_spawn_delay di _ready
 var _asteroid_timer: float = 0.0
@@ -19,6 +26,10 @@ var _ammo_timer: float = 3.0     # amunisi pertama muncul lebih cepat dari abili
 var _next_cluster_id: int = 0
 var _elapsed: float = 0.0        # waktu bermain, untuk ramp spacing
 var _game_over: bool = false
+var _leaving: bool = false
+var _demo_chain_timer: float = 0.0
+var _demo_target: Node2D
+var _demo_waypoint: Vector2
 
 @onready var arena_border: Line2D = $ArenaBorder
 @onready var player: CharacterBody2D = $Player
@@ -31,6 +42,10 @@ func _ready() -> void:
 	# game over masih aktif (autoload Juice tidak ikut ke-reset).
 	Engine.time_scale = 1.0
 	Juice.base_time_scale = 1.0
+
+	if demo_mode:
+		_setup_demo()
+		return
 
 	# Sambungkan sistem pusat: ChainManager -> UI, Player -> UI.
 	chain_manager.score_changed.connect(ui.set_score)
@@ -45,10 +60,20 @@ func _ready() -> void:
 	ui.set_abilities(false, false)
 	ui.set_ammo(GameBalance.player_max_ammo, GameBalance.player_max_ammo)
 
+	_draw_arena_border()
+
+	player.global_position = Vector2(GameBalance.arena_width, GameBalance.arena_height) * 0.5
+	# Cegah efek "meluncur" di frame pertama setelah player dipindah paksa.
+	player.reset_physics_interpolation()
+
+	_cluster_timer = GameBalance.initial_spawn_delay
+	ui.fade_in(GameBalance.gameover_fade_time)
+
+
+# Garis batas arena (bukan entity — boleh diatur dari kode).
+func _draw_arena_border() -> void:
 	var w := GameBalance.arena_width
 	var h := GameBalance.arena_height
-
-	# Garis batas arena (bukan entity — boleh diatur dari kode).
 	arena_border.points = PackedVector2Array([
 		Vector2.ZERO,
 		Vector2(w, 0),
@@ -57,14 +82,11 @@ func _ready() -> void:
 		Vector2.ZERO,
 	])
 
-	player.global_position = Vector2(w, h) * 0.5
-	# Cegah efek "meluncur" di frame pertama setelah player dipindah paksa.
-	player.reset_physics_interpolation()
-
-	_cluster_timer = GameBalance.initial_spawn_delay
-
 
 func _process(delta: float) -> void:
+	if demo_mode:
+		_process_demo(delta)
+		return
 	if _game_over:
 		return  # berhenti spawn; restart tetap bisa lewat _unhandled_input
 	_elapsed += delta
@@ -89,8 +111,22 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _leaving or demo_mode:
+		return
 	if event.is_action_pressed("restart"):
-		get_tree().reload_current_scene()
+		_leave(func() -> void: get_tree().reload_current_scene())
+	elif _game_over and event.is_action_pressed("back_to_menu"):
+		_leave(func() -> void: get_tree().change_scene_to_file(MENU_SCENE))
+
+
+# R (restart) dan ESC (menu): layar fade gelap dulu, baru pindah scene.
+# Rekor sudah tersimpan saat player mati, jadi aman keluar kapan saja.
+func _leave(change_scene: Callable) -> void:
+	_leaving = true
+	await ui.fade_out(GameBalance.gameover_fade_time).finished
+	Engine.time_scale = 1.0
+	Juice.base_time_scale = 1.0
+	change_scene.call()
 
 
 func _on_player_died() -> void:
@@ -101,7 +137,9 @@ func _on_player_died() -> void:
 	# Slow-motion sesaat, lalu layar game over fade in.
 	Juice.base_time_scale = GameBalance.game_over_slowmo_scale
 	Engine.time_scale = GameBalance.game_over_slowmo_scale
-	ui.show_game_over(chain_manager.score, chain_manager.highest_chain)
+	SaveData.submit_run(chain_manager.score, chain_manager.highest_chain)
+	ui.show_game_over(chain_manager.score, chain_manager.highest_chain,
+		SaveData.last_new_high_score, SaveData.last_new_best_chain)
 	await get_tree().create_timer(GameBalance.game_over_slowmo_time, true, false, true).timeout
 	Juice.base_time_scale = 1.0
 	Engine.time_scale = 1.0
@@ -274,3 +312,95 @@ func _try_spawn_ammo() -> void:
 	ammo.position = _random_inner_position()
 	add_child(ammo)
 	ammo.reset_physics_interpolation()
+
+
+# ---------------- MODE DEMO (latar main menu) ----------------
+
+func _setup_demo() -> void:
+	var w := GameBalance.arena_width
+	var h := GameBalance.arena_height
+	var center := Vector2(w, h) * 0.5
+	_draw_arena_border()
+
+	chain_manager.show_milestones = false
+
+	# Player & HUD tidak dipakai di demo.
+	player.queue_free()
+	ui.queue_free()
+	# Player sudah di-queue_free tapi masih ada di grup sampai akhir frame;
+	# keluarkan sekarang supaya musuh tidak mengincarnya.
+	player.remove_from_group("player")
+
+	# Target tak terlihat yang dikejar musuh. Tidak punya take_damage(),
+	# jadi semua kode "melukai player" otomatis melewatinya.
+	_demo_target = Node2D.new()
+	_demo_target.name = "DemoTarget"
+	_demo_target.position = center
+	_demo_target.add_to_group("player")
+	add_child(_demo_target)
+	_demo_waypoint = center
+
+	# Kamera diam di tengah, di-zoom out supaya sebagian besar arena terlihat.
+	var cam := Camera2D.new()
+	cam.position = center
+	cam.zoom = Vector2.ONE * GameBalance.menu_demo_camera_zoom
+	add_child(cam)
+	cam.make_current()
+
+	_cluster_timer = 0.0  # langsung isi layar
+	_demo_chain_timer = GameBalance.menu_demo_chain_interval
+
+
+func _process_demo(delta: float) -> void:
+	_elapsed += delta
+	_cluster_timer -= delta
+	if _cluster_timer <= 0.0:
+		_cluster_timer = _current_cluster_interval()
+		_try_spawn_cluster()
+	if _elapsed >= GameBalance.asteroid_start_time:
+		_asteroid_timer -= delta
+		if _asteroid_timer <= 0.0:
+			_asteroid_timer = GameBalance.asteroid_spawn_interval
+			_try_spawn_asteroid()
+
+	# Target berkeliling pelan di sekitar tengah arena.
+	var to_wp := _demo_waypoint - _demo_target.position
+	if to_wp.length() < 10.0:
+		var center := Vector2(GameBalance.arena_width, GameBalance.arena_height) * 0.5
+		_demo_waypoint = center + Vector2.RIGHT.rotated(randf() * TAU) \
+			* randf_range(0.0, GameBalance.menu_demo_wander_radius)
+	else:
+		_demo_target.position += to_wp.normalized() \
+			* minf(GameBalance.menu_demo_wander_speed * delta, to_wp.length())
+
+	_demo_chain_timer -= delta
+	if _demo_chain_timer <= 0.0:
+		_demo_chain_timer = GameBalance.menu_demo_chain_interval
+		_trigger_demo_chain()
+
+
+# Ledakkan swarm yang tetangganya paling banyak -> kaskade paling panjang.
+# Sumber "demo" (bukan "bullet"), jadi ChainManager menghitungnya sebagai
+# chain sungguhan lengkap dengan floating text x2, x3, ...
+func _trigger_demo_chain() -> void:
+	var swarms := get_tree().get_nodes_in_group("swarms")
+	if swarms.is_empty():
+		return
+	swarms.shuffle()
+	var radius := GameBalance.swarm_death_burst_radius
+	var best: Node2D = null
+	var best_neighbors := -1
+	for i in mini(swarms.size(), 25):
+		var s := swarms[i] as Node2D
+		if s == null:
+			continue
+		var n := 0
+		for other in swarms:
+			var o := other as Node2D
+			if o != null and o != s and o.global_position.distance_to(s.global_position) < radius:
+				n += 1
+		if n > best_neighbors:
+			best_neighbors = n
+			best = s
+	if best != null and best.has_method("take_damage"):
+		best.take_damage(9999, "demo", 0)

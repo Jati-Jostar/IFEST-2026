@@ -7,9 +7,22 @@ extends Node
 #  Saat ini SEMUA slot masih null = tidak ada suara, dan itu normal.
 #  Nanti file .ogg tinggal dipasang ke dictionary `streams` di bawah
 #  tanpa mengubah kode gameplay sama sekali.
+#
+#  MUSIK: autoload ini sekarang berupa SCENE (scenes/audio_manager.tscn).
+#  Buka scene itu, klik node AudioManager, lalu seret file .ogg musik ke
+#  slot "Music Stream" di Inspector. Kosong = diam, tanpa error.
+#  Musik diputar oleh player khusus di bus "Music" (bukan lewat pool SFX),
+#  dan karena autoload tidak pernah dihapus, musik tetap jalan terus saat
+#  pindah menu -> game -> game over -> menu tanpa mulai ulang.
 # =====================================================================
 
 const POOL_SIZE := 8
+const MUSIC_BUS := &"Music"
+const SFX_BUS := &"SFX"
+const SILENT_DB := -80.0
+
+# Slot musik latar. Seret file .ogg ke sini lewat Inspector.
+@export var music_stream: AudioStream
 
 # Slot audio per event. Isi dengan preload("res://assets/audio/nama.ogg")
 # saat file audio sudah ada. Selama null, play() diam tanpa error.
@@ -44,14 +57,26 @@ var volumes: Dictionary = {
 
 var _players: Array[AudioStreamPlayer] = []
 var _next_player: int = 0
+var _music_player: AudioStreamPlayer
+var _music_tween: Tween
 
 
 func _ready() -> void:
 	# Pool kecil supaya beberapa suara bisa overlap.
 	for i in POOL_SIZE:
 		var p := AudioStreamPlayer.new()
+		p.bus = SFX_BUS
 		add_child(p)
 		_players.append(p)
+
+	apply_bus_volumes()
+
+	_music_player = AudioStreamPlayer.new()
+	_music_player.bus = MUSIC_BUS
+	_music_player.finished.connect(_on_music_finished)
+	add_child(_music_player)
+	# Musik mulai sekali saat game dibuka, lalu jalan terus.
+	play_music()
 
 
 func play(event_name: String, _position: Vector2 = Vector2.ZERO, pitch: float = 1.0) -> void:
@@ -76,3 +101,73 @@ func stop(event_name: String) -> void:
 	for p in _players:
 		if p.playing and p.stream == stream:
 			p.stop()
+
+
+# ------------------------------------------------------------ BUS VOLUME
+
+func apply_bus_volumes() -> void:
+	var music_idx := AudioServer.get_bus_index(MUSIC_BUS)
+	var sfx_idx := AudioServer.get_bus_index(SFX_BUS)
+	if music_idx >= 0:
+		AudioServer.set_bus_volume_db(music_idx, GameBalance.music_volume_db)
+	if sfx_idx >= 0:
+		AudioServer.set_bus_volume_db(sfx_idx, GameBalance.sfx_volume_db)
+
+
+# Ubah volume SFX sementara (mis. demo di menu). apply_bus_volumes()
+# mengembalikannya ke nilai GameBalance.
+func set_sfx_volume_db(db: float) -> void:
+	var idx := AudioServer.get_bus_index(SFX_BUS)
+	if idx >= 0:
+		AudioServer.set_bus_volume_db(idx, db)
+
+
+# ------------------------------------------------------------ MUSIK
+
+# Putar musik dengan fade-in. Kalau lagu yang sama sudah jalan, tidak
+# diulang dari awal (penting supaya pindah scene tidak me-restart musik).
+func play_music(stream: AudioStream = null, fade_time: float = -1.0) -> void:
+	if stream != null:
+		music_stream = stream
+	if music_stream == null:
+		return
+	if _music_player.playing and _music_player.stream == music_stream:
+		fade_music(0.0, fade_time if fade_time >= 0.0 else GameBalance.music_fade_in_time)
+		return
+	# Pastikan loop untuk format yang mendukungnya (ogg/mp3).
+	if "loop" in music_stream:
+		music_stream.set("loop", true)
+	_music_player.stream = music_stream
+	_music_player.volume_db = SILENT_DB
+	_music_player.play()
+	fade_music(0.0, fade_time if fade_time >= 0.0 else GameBalance.music_fade_in_time)
+
+
+# Hentikan musik dengan fade-out.
+func stop_music(fade_time: float = -1.0) -> void:
+	if not _music_player.playing:
+		return
+	fade_music(SILENT_DB, fade_time if fade_time >= 0.0 else GameBalance.music_fade_out_time, true)
+
+
+# Geser volume musik ke target_db dalam `time` detik. Tidak terpengaruh
+# slow-motion / hitstop (Engine.time_scale).
+func fade_music(target_db: float, time: float, stop_after: bool = false) -> void:
+	if _music_tween and _music_tween.is_valid():
+		_music_tween.kill()
+	if time <= 0.0:
+		_music_player.volume_db = target_db
+		if stop_after:
+			_music_player.stop()
+		return
+	_music_tween = create_tween()
+	_music_tween.set_ignore_time_scale(true)
+	_music_tween.tween_property(_music_player, "volume_db", target_db, time)
+	if stop_after:
+		_music_tween.tween_callback(_music_player.stop)
+
+
+# Cadangan untuk format tanpa properti loop (mis. wav tanpa loop point).
+func _on_music_finished() -> void:
+	if _music_player.volume_db > SILENT_DB + 1.0:
+		_music_player.play()

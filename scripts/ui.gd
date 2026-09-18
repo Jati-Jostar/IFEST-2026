@@ -12,6 +12,9 @@ extends CanvasLayer
 @onready var game_over_panel: Control = $GameOverPanel
 @onready var final_score_label: Label = $GameOverPanel/Center/VBox/FinalScore
 @onready var best_chain_label: Label = $GameOverPanel/Center/VBox/BestChain
+@onready var chain_record_label: Label = $GameOverPanel/Center/VBox/ChainRecord
+@onready var score_record_label: Label = $GameOverPanel/Center/VBox/ScoreRecord
+@onready var fader: ColorRect = $Fader
 
 const COLOR_READY_SINGULARITY := Color(0.45, 0.65, 1.0)
 const COLOR_READY_NUKE := Color(1.0, 0.85, 0.3)
@@ -24,6 +27,7 @@ var _chain_fade_tween: Tween
 var _ammo_blink_tween: Tween
 var _sing_pulse: Tween
 var _nuke_pulse: Tween
+var _fade_tween: Tween
 
 
 func set_hp(hp: int) -> void:
@@ -112,13 +116,30 @@ func set_chain(count: int) -> void:
 
 
 # Layar game over: fade in, bukan muncul mendadak.
-func show_game_over(score: int, best_chain: int) -> void:
-	final_score_label.text = "SCORE: %06d" % score
-	best_chain_label.text = "BEST CHAIN: x%d" % best_chain
+# Chain terbaik run ini ditonjolkan (angka besar, warna aksen) karena chain
+# adalah inti game; rekor baru ditandai "REKOR BARU!" yang berdenyut.
+func show_game_over(score: int, best_chain: int,
+		new_high_score: bool = false, new_best_chain: bool = false) -> void:
+	final_score_label.text = "SKOR %s" % SaveData.format_thousands(score)
+	best_chain_label.text = "x%d" % best_chain
+	_show_record_mark(chain_record_label, new_best_chain)
+	_show_record_mark(score_record_label, new_high_score)
 	game_over_panel.visible = true
 	game_over_panel.modulate = Color(1, 1, 1, 0)
 	var tw := game_over_panel.create_tween()
-	tw.tween_property(game_over_panel, "modulate:a", 1.0, 0.6)
+	tw.set_ignore_time_scale(true)
+	tw.tween_property(game_over_panel, "modulate:a", 1.0, GameBalance.gameover_fade_time)
+
+
+func _show_record_mark(label: Label, is_new: bool) -> void:
+	label.visible = is_new
+	if not is_new:
+		return
+	var tw := label.create_tween()
+	tw.set_ignore_time_scale(true)
+	tw.set_loops()
+	tw.tween_property(label, "modulate:a", 0.35, 0.4).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(label, "modulate:a", 1.0, 0.4).set_trans(Tween.TRANS_SINE)
 
 
 func on_chain_ended(_final_count: int, _highest: int) -> void:
@@ -140,3 +161,31 @@ func _chain_color(count: int) -> Color:
 	if count < 20:
 		return Color(1.0, 0.6, 0.15)
 	return Color(1.0, 0.25, 0.2)
+
+
+# Layar menggelap penuh — dipakai saat restart (R) dan keluar ke menu (ESC).
+# Tidak terpengaruh slow-motion game over. Mulai dari alpha saat ini,
+# jadi aman walau fade_in awal run belum selesai.
+func fade_out(time: float) -> Tween:
+	_kill_fade()
+	fader.visible = true
+	_fade_tween = fader.create_tween()
+	_fade_tween.set_ignore_time_scale(true)
+	_fade_tween.tween_property(fader, "color:a", 1.0, time * (1.0 - fader.color.a))
+	return _fade_tween
+
+
+# Kebalikan fade_out: layar mulai gelap lalu terang — awal setiap run.
+func fade_in(time: float) -> void:
+	_kill_fade()
+	fader.visible = true
+	fader.color.a = 1.0
+	_fade_tween = fader.create_tween()
+	_fade_tween.set_ignore_time_scale(true)
+	_fade_tween.tween_property(fader, "color:a", 0.0, time)
+	_fade_tween.tween_callback(fader.hide)
+
+
+func _kill_fade() -> void:
+	if _fade_tween != null and _fade_tween.is_valid():
+		_fade_tween.kill()

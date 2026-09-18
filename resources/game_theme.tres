@@ -1,0 +1,24 @@
+[gd_resource type="Theme" format=3]
+
+; Tema global Supernova. Dipasang di Project Settings > GUI > Theme > Custom,
+; jadi SEMUA Label di game & menu otomatis pakai font + ukuran ini.
+;
+; Font pixel: seret file .ttf/.otf ke slot "Default Font" di Inspector
+; (klik file ini di FileSystem). Selama kosong, Godot pakai font bawaan.
+;
+; Ukuran font (ubah di sini, bukan di tiap Label):
+;   TitleLabel = judul besar (SUPERNOVA, GAME OVER)
+;   HudLabel   = HP, ammo, skor, chain, hasil game over
+;   BodyLabel  = status ability, teks menu biasa
+;   SmallLabel = kontrol, kredit, teks kecil
+
+[resource]
+default_font_size = 20
+TitleLabel/base_type = &"Label"
+TitleLabel/font_sizes/font_size = 52
+HudLabel/base_type = &"Label"
+HudLabel/font_sizes/font_size = 24
+BodyLabel/base_type = &"Label"
+BodyLabel/font_sizes/font_size = 20
+SmallLabel/base_type = &"Label"
+SmallLabel/font_sizes/font_size = 14
