@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://busp7sk4t2kkv"
-path="res://.godot/imported/icon-ammo.png-2ef8c6e90d6b4e44b7a0fb1c74fac31c.ctex"
+uid="uid://dnkf0ts2idwik"
+path="res://.godot/imported/paralax-galaxy(Layer 5) _0001.png-9a3547313a236867b7715fd9eae4c7eb.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/icon-ammo.png"
-dest_files=["res://.godot/imported/icon-ammo.png-2ef8c6e90d6b4e44b7a0fb1c74fac31c.ctex"]
+source_file="res://assets/sprites/Background-Paralax/paralax-galaxy(Layer 5) _0001.png"
+dest_files=["res://.godot/imported/paralax-galaxy(Layer 5) _0001.png-9a3547313a236867b7715fd9eae4c7eb.ctex"]
 
 [params]
 

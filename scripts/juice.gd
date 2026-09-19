@@ -142,6 +142,29 @@ func spawn_fx(scene: PackedScene, position: Vector2) -> void:
 	fx.reset_physics_interpolation()
 
 
+# Kilatan GARIS terang sepanjang titik-titik (mis. badan Space Worm):
+# muncul setebal `width`, lalu menipis dan memudar selama `duration`.
+func spawn_line(points: Array[Vector2], width: float, color: Color, duration: float) -> void:
+	if points.size() < 2 or not _fx_slot_free():
+		return
+	var line := Line2D.new()
+	_track_fx(line)
+	line.points = PackedVector2Array(points)
+	line.width = width
+	line.default_color = color
+	line.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	line.end_cap_mode = Line2D.LINE_CAP_ROUND
+	line.joint_mode = Line2D.LINE_JOINT_ROUND
+	line.z_index = -1  # di bawah entity & ledakan, supaya ring/animasi tetap terlihat
+	get_tree().current_scene.add_child(line)
+	line.reset_physics_interpolation()
+	var tw := line.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(line, "width", width * 0.2, duration).set_ease(Tween.EASE_IN)
+	tw.tween_property(line, "modulate:a", 0.0, duration).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(line.queue_free)
+
+
 func spawn_sparks(position: Vector2, direction: Vector2) -> void:
 	if not _fx_slot_free():
 		return

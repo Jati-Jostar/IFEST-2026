@@ -91,6 +91,37 @@ func on_asteroid_destroyed(pos: Vector2, killed_by: String) -> void:
 	Juice.shake(GameBalance.shake_asteroid_intensity, GameBalance.shake_asteroid_duration)
 
 
+# Dipanggil (via signal) saat Space Worm mati. Kematian worm SENDIRI tidak
+# menambah chain (worm bukan umpan chain), tapi ledakan GARIS sepanjang
+# badannya mereset depth ke 0 — sama seperti Heavy — jadi worm yang mati
+# melintang di atas kerumunan bisa memicu kaskade penuh.
+func on_worm_died(body_points: Array[Vector2], _killed_by: String) -> void:
+	if body_points.is_empty():
+		return
+	score += GameBalance.score_worm * maxi(chain_count, 1)
+	score_changed.emit(score)
+
+	# Juice = gabungan swarm + Heavy, tapi berbentuk GARIS:
+	# - kilatan garis hijau transparan sepanjang badan (di bawah semuanya)
+	# - tiap ruas: animasi ledakan kecil + ring jangkauan (seperti swarm)
+	# - kepala: animasi ledakan besar + ring besar + screen flash (seperti Heavy)
+	Juice.spawn_line(body_points, GameBalance.worm_explosion_width,
+		Color(0.75, 1.0, 0.45, GameBalance.worm_explosion_flash_alpha),
+		GameBalance.worm_explosion_flash_time)
+	for p in body_points:
+		Juice.spawn_fx(EXPLOSION_SMALL, p)
+		Juice.spawn_ring(p, GameBalance.worm_explosion_width * 0.5,
+			Color(1.0, 0.6, 0.25, 1.0), GameBalance.worm_ring_duration)
+	var head_pos: Vector2 = body_points[0]
+	Juice.spawn_fx(EXPLOSION_HEAVY, head_pos)
+	Juice.spawn_ring(head_pos, GameBalance.worm_explosion_width,
+		Color(0.85, 1.0, 0.45, 1.0), GameBalance.worm_ring_duration + 0.1)
+	Juice.screen_flash(Color(0.85, 1.0, 0.6, 1.0), 0.2, 0.15)
+	Juice.shake(GameBalance.shake_worm_intensity, GameBalance.shake_worm_duration)
+	Juice.hitstop(GameBalance.hitstop_worm)
+	_schedule_line_explosion(body_points, GameBalance.worm_explosion_width * 0.5,
+		GameBalance.worm_explosion_damage, 0)
+
 func _increment_chain(pos: Vector2) -> void:
 	chain_count += 1
 	highest_chain = maxi(highest_chain, chain_count)
@@ -144,12 +175,65 @@ func _schedule_explosion(pos: Vector2, radius: float, damage: int, next_depth: i
 		if a != null and a.global_position.distance_to(pos) - a.body_radius <= radius:
 			a.take_damage(damage, "chain", next_depth)
 
+	# Space Worm ikut kena, diukur ke bagian badan terdekat. Damage-nya TIDAK
+	# ikut meluruh (min worm_min_chain_damage), jadi tiap ledakan yang
+	# menimpa worm terasa. Kalau mati, ledakan garisnya menyambung chain.
+	for worm in get_tree().get_nodes_in_group("worms"):
+		var w := worm as SpaceWorm
+		if w != null and w.distance_to_body(pos) <= radius:
+			w.take_damage(maxi(damage, GameBalance.worm_min_chain_damage), "chain", next_depth)
+
 	# Player ikut kena, tapi dikali self-damage multiplier (default 0.35).
 	var player: Node2D = get_tree().get_first_node_in_group("player")
 	if player != null and is_instance_valid(player) and player.has_method("take_damage"):
 		if player.global_position.distance_to(pos) <= radius:
 			player.take_damage(int(ceil(damage * GameBalance.player_self_damage_multiplier)))
 
+
+# Versi GARIS dari _schedule_explosion: area kena = semua titik yang
+# jaraknya ke garis badan (polyline) <= half_width. Target & aturan sama
+# persis: kill = event chain biasa lewat take_damage(..., "chain", depth).
+func _schedule_line_explosion(points: Array[Vector2], half_width: float,
+		damage: int, next_depth: int) -> void:
+	await get_tree().create_timer(GameBalance.chain_stagger).timeout
+
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		var e := enemy as EnemyBase
+		if e != null and _distance_to_polyline(e.global_position, points) - e.body_radius <= half_width:
+			e.take_damage(damage, "chain", next_depth)
+
+	for asteroid in get_tree().get_nodes_in_group("asteroids"):
+		var a := asteroid as Node2D
+		if a != null and _distance_to_polyline(a.global_position, points) - a.body_radius <= half_width:
+			a.take_damage(damage, "chain", next_depth)
+
+	for worm in get_tree().get_nodes_in_group("worms"):
+		var w := worm as SpaceWorm
+		if w != null and _polyline_to_worm(points, w) <= half_width:
+			w.take_damage(maxi(damage, GameBalance.worm_min_chain_damage), "chain", next_depth)
+
+	var player: Node2D = get_tree().get_first_node_in_group("player")
+	if player != null and is_instance_valid(player) and player.has_method("take_damage"):
+		if _distance_to_polyline(player.global_position, points) <= half_width:
+			player.take_damage(int(ceil(damage * GameBalance.player_self_damage_multiplier)))
+
+
+# Jarak terdekat antara garis ledakan dan badan worm (kepala/ruas mana pun).
+func _polyline_to_worm(points: Array[Vector2], w: SpaceWorm) -> float:
+	var best := INF
+	for bp in w.get_body_points():
+		best = minf(best, _distance_to_polyline(bp, points))
+	return best
+
+
+func _distance_to_polyline(p: Vector2, points: Array[Vector2]) -> float:
+	if points.size() == 1:
+		return p.distance_to(points[0])
+	var best := INF
+	for i in points.size() - 1:
+		var c := Geometry2D.get_closest_point_to_segment(p, points[i], points[i + 1])
+		best = minf(best, p.distance_to(c))
+	return best
 
 # Warna chain: putih → kuning → oranye → merah.
 func _chain_color(count: int) -> Color:

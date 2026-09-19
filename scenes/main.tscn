@@ -5,16 +5,54 @@
 [ext_resource type="Script" uid="uid://c1oov2so3i3wn" path="res://scripts/star_field.gd" id="3_stars"]
 [ext_resource type="Script" uid="uid://hk65yxbgd0ju" path="res://scripts/chain_manager.gd" id="4_chain"]
 [ext_resource type="PackedScene" path="res://scenes/ui.tscn" id="5_ui"]
-[ext_resource type="Texture2D" uid="uid://cdr14mu3a1amc" path="res://assets/sprites/Background.png" id="6_bg"]
+[ext_resource type="Texture2D" uid="uid://bkluldopkybjn" path="res://assets/sprites/Background-Paralax/paralax-galaxy(Layer 1) _0001.png" id="bg_l1"]
+[ext_resource type="Texture2D" uid="uid://t48wspy5ie7" path="res://assets/sprites/Background-Paralax/paralax-galaxy(Layer 2) _0001.png" id="bg_l2"]
+[ext_resource type="Texture2D" uid="uid://caq3dfbepygdw" path="res://assets/sprites/Background-Paralax/paralax-galaxy(Layer 3) _0001.png" id="bg_l3"]
+[ext_resource type="Texture2D" uid="uid://drpskigly1did" path="res://assets/sprites/Background-Paralax/paralax-galaxy(Layer 4) _0001.png" id="bg_l4"]
+[ext_resource type="Texture2D" uid="uid://dnkf0ts2idwik" path="res://assets/sprites/Background-Paralax/paralax-galaxy(Layer 5) _0001.png" id="bg_l5"]
+[ext_resource type="Script" path="res://scripts/parallax_background.gd" id="bg_script"]
 
 [node name="Main" type="Node2D" unique_id=1823519118]
 script = ExtResource("1_main")
 
-[node name="Background" type="Sprite2D" parent="."]
+[node name="Background" type="Node2D" parent="."]
 z_index = -3
-position = Vector2(800, 450)
+script = ExtResource("bg_script")
+
+[node name="Layer1" type="Parallax2D" parent="Background"]
+
+[node name="Sprite" type="Sprite2D" parent="Background/Layer1"]
 texture_filter = 1
-texture = ExtResource("6_bg")
+texture = ExtResource("bg_l1")
+centered = false
+
+[node name="Layer2" type="Parallax2D" parent="Background"]
+
+[node name="Sprite" type="Sprite2D" parent="Background/Layer2"]
+texture_filter = 1
+texture = ExtResource("bg_l2")
+centered = false
+
+[node name="Layer3" type="Parallax2D" parent="Background"]
+
+[node name="Sprite" type="Sprite2D" parent="Background/Layer3"]
+texture_filter = 1
+texture = ExtResource("bg_l3")
+centered = false
+
+[node name="Layer4" type="Parallax2D" parent="Background"]
+
+[node name="Sprite" type="Sprite2D" parent="Background/Layer4"]
+texture_filter = 1
+texture = ExtResource("bg_l5")
+centered = false
+
+[node name="Layer5" type="Parallax2D" parent="Background"]
+
+[node name="Sprite" type="Sprite2D" parent="Background/Layer5"]
+texture_filter = 1
+texture = ExtResource("bg_l4")
+centered = false
 
 [node name="StarField" type="Node2D" parent="." unique_id=1720246038]
 visible = false

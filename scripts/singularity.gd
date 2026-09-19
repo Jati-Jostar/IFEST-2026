@@ -1,6 +1,7 @@
 extends Node2D
 
-# SINGULARITY — alat PENGUMPUL. Menarik swarm, heavy, asteroid, dan
+# SINGULARITY — alat PENGUMPUL. Menarik swarm, heavy, asteroid, Space Worm
+# (lewat kepalanya; ruas mengikuti), dan
 # fragment ke pusatnya. TIDAK men-damage apa pun, TIDAK menarik player.
 # Saat habis: objek berhenti ditarik, tetap di posisinya, tanpa ledakan.
 # Tarikan makin kuat makin dekat ke pusat (tanpa fisika rumit).
@@ -8,7 +9,7 @@ extends Node2D
 # Seluruh tampilannya sekarang berasal dari animasi sprite di $Visual —
 # tidak ada lagi lingkaran/garis yang digambar lewat kode.
 
-const PULL_GROUPS: Array[String] = ["enemies", "asteroids", "fragments"]
+const PULL_GROUPS: Array[String] = ["enemies", "asteroids", "fragments", "worms"]
 
 var _time_left: float = 2.5
 var _shake_timer: float = 0.0

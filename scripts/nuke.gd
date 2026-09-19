@@ -2,7 +2,7 @@ extends Node2D
 
 # NUKE — senjata pamungkas langka sekaligus pemicu chain terbesar.
 # Ledakan lingkaran yang mengembang dari 0 ke radius penuh dan MENGHAPUS
-# TOTAL semua yang dilewatinya: swarm, Heavy, dan asteroid. Tanpa
+# TOTAL semua yang dilewatinya: swarm, Heavy, asteroid, dan Space Worm. Tanpa
 # falloff, tanpa penyintas di dalam radius.
 #
 # Damage diterapkan saat gelombang ring MELEWATI objek (bukan sekaligus),
@@ -68,6 +68,14 @@ func _damage_band(from_r: float, to_r: float) -> void:
 			var d := maxf(global_position.distance_to(a.global_position) - a.body_radius, 0.0)
 			if d >= from_r and d <= to_r:
 				a.take_damage(GameBalance.nuke_damage, "nuke", 0)
+	# Space Worm: jarak diukur ke bagian badan TERDEKAT (kepala atau ruas).
+	# Worm yang mati memicu ledakan garisnya sendiri lewat ChainManager.
+	for worm in get_tree().get_nodes_in_group("worms"):
+		var w := worm as SpaceWorm
+		if w != null:
+			var d := w.distance_to_body(global_position)
+			if d >= from_r and d <= to_r:
+				w.take_damage(GameBalance.nuke_damage, "nuke", 0)
 	if not _player_hit:
 		var player: Node2D = get_tree().get_first_node_in_group("player")
 		if player != null and is_instance_valid(player) and player.has_method("take_damage"):

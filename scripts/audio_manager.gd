@@ -40,6 +40,9 @@ var streams: Dictionary = {
 	"nuke_activate": preload("res://assets/audio/kenney_sci-fi-sounds/explosionCrunch_000.ogg"),
 	"chain_increment": preload("res://assets/audio/kenney_interface-sounds/maximize_007.ogg"),
 	"chain_end": preload("res://assets/audio/kenney_interface-sounds/minimize_006.ogg"),
+	# Space Worm — slot kosong, silakan isi (aman selama null).
+	"worm_telegraph": null,
+	"worm_lunge": null,
 	# SENGAJA dibiarkan kosong: "player_death" sudah berbunyi di frame yang
 	# sama saat player mati, dan dua suara sekaligus malah saling menutupi.
 	"game_over": null,

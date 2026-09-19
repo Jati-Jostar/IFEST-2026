@@ -10,6 +10,7 @@ const HEAVY_SCENE := preload("res://scenes/enemies/heavy_enemy.tscn")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
 const PICKUP_SCENE := preload("res://scenes/abilities/ability_pickup.tscn")
 const AMMO_PICKUP_SCENE := preload("res://scenes/abilities/ammo_pickup.tscn")
+const WORM_SCENE := preload("res://scenes/enemies/space_worm.tscn")
 const MENU_SCENE := "res://scenes/main_menu.tscn"
 
 # Mode demo: scene ini juga dipakai sebagai latar hidup di main menu.
@@ -30,6 +31,7 @@ var _leaving: bool = false
 var _demo_chain_timer: float = 0.0
 var _demo_target: Node2D
 var _demo_waypoint: Vector2
+var _worm_timer: float = 0.0     # jeda antar spawn worm
 
 @onready var arena_border: Line2D = $ArenaBorder
 @onready var player: CharacterBody2D = $Player
@@ -108,6 +110,7 @@ func _process(delta: float) -> void:
 	if _ammo_timer <= 0.0:
 		_ammo_timer = GameBalance.ammo_spawn_interval
 		_try_spawn_ammo()
+	_update_worm_spawning(delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -262,6 +265,50 @@ func _random_edge_position() -> Vector2:
 			return Vector2(w, randf_range(0.0, h))        # kanan
 
 
+# ---------------- SPACE WORM ----------------
+
+# Batas worm bersamaan dari skor: 0 sebelum worm_first_score, lalu 1,
+# +1 tiap worm_score_step, maksimal worm_max_cap.
+func _allowed_worm_count() -> int:
+	var s: int = chain_manager.score
+	if s < GameBalance.worm_first_score:
+		return 0
+	var steps := int(float(s - GameBalance.worm_first_score) / float(GameBalance.worm_score_step))
+	return mini(1 + steps, GameBalance.worm_max_cap)
+
+
+# Timer sendiri, kuota sendiri — tidak pernah memperlambat spawn lain.
+func _update_worm_spawning(delta: float) -> void:
+	_worm_timer -= delta
+	if _worm_timer > 0.0:
+		return
+	if get_tree().get_nodes_in_group("worms").size() >= _allowed_worm_count():
+		return
+	_worm_timer = GameBalance.worm_spawn_cooldown
+	_spawn_worm()
+
+
+# Muncul di tepi arena, cukup jauh dari player supaya tidak langsung
+# menerjang dari jarak dekat. Kalau tidak ketemu, pakai titik terjauh.
+func _spawn_worm() -> void:
+	var best := _random_edge_position()
+	var best_dist := -1.0
+	for attempt in 10:
+		var candidate := _random_edge_position()
+		var d := candidate.distance_to(player.global_position)
+		if d >= GameBalance.worm_spawn_min_player_distance:
+			best = candidate
+			break
+		if d > best_dist:
+			best_dist = d
+			best = candidate
+	var worm := WORM_SCENE.instantiate()
+	worm.position = best
+	worm.worm_died.connect(chain_manager.on_worm_died)
+	add_child(worm)
+	worm.reset_physics_interpolation()
+
+
 # ---------------- ASTEROID & PICKUP ----------------
 
 func _try_spawn_asteroid() -> void:
@@ -323,6 +370,7 @@ func _setup_demo() -> void:
 	_draw_arena_border()
 
 	chain_manager.show_milestones = false
+	$Background.set_static()
 
 	# Player & HUD tidak dipakai di demo.
 	player.queue_free()

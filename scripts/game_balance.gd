@@ -12,10 +12,11 @@ extends Node
 # =====================================================================
 
 # ============ ARENA ============
-# Ukuran arena permainan dalam pixel. Layar = 1280x720,
+# Ukuran arena permainan dalam pixel. Layar = 960x720, arena = ukuran
+# background parallax (assets/sprites/Background-Paralax, 1600x1200),
 # arena sedikit lebih besar supaya kamera bisa bergeser.
 var arena_width: float = 1600.0
-var arena_height: float = 900.0
+var arena_height: float = 1200.0
 
 # ============ PLAYER ============
 var player_speed: float = 320.0        # kecepatan gerak (pixel/detik)
@@ -236,3 +237,66 @@ var menu_demo_camera_zoom: float = 0.8    # < 1 = zoom out (lihat arena lebih lu
 var menu_demo_wander_radius: float = 260.0 # seberapa jauh titik kumpul musuh berkeliling
 var menu_demo_wander_speed: float = 60.0  # kecepatan titik kumpul (px/detik)
 var menu_demo_sfx_volume_db: float = -10.0 # SFX demo lebih pelan dari saat bermain
+
+# ============ SPACE WORM (rintangan panjang hijau) ============
+# Bukan umpan chain: tidak ditarik Singularity, tidak kena burst chain.
+# Badan beruas: kepala + ruas-ruas ($Visual/SegmentN) yang mengikuti jejak kepala.
+var worm_hp: int = 200
+var worm_drift_speed: float = 60.0
+var worm_turn_rate: float = 2.0           # rad/detik — seberapa cepat berbelok ke target
+var worm_wander_radius: float = 220.0     # target = player + offset acak sejauh ini
+var worm_wander_interval: float = 3.0     # detik antar ganti offset acak
+var worm_edge_margin: float = 80.0        # target drift dijaga sejauh ini dari tepi arena
+var worm_segment_spacing: float = 20.0    # jarak antar ruas di sepanjang jejak kepala
+										  # (panjang badan = spacing x jumlah ruas)
+var worm_trail_resolution: float = 3.0    # kepala dicatat ke jejak tiap bergeser sejauh ini (px)
+
+# Serangan lunge: berhenti -> telegraph (garis peringatan) -> dash lurus.
+var worm_attack_interval: float = 4.0     # detik melayang antar lunge
+var worm_attack_range: float = 650.0      # hanya menyerang kalau player sedekat ini
+										  # (cegah lunge dari luar layar tanpa terlihat)
+var worm_telegraph_time: float = 0.6      # jendela peringatan sebelum dash — waktu menghindar
+var worm_telegraph_turn_rate: float = 10.0 # rad/detik badan berbelok ke arah dash saat telegraph
+var worm_telegraph_blink_time: float = 0.1 # setengah siklus kedip garis & badan
+var worm_telegraph_line_width: float = 6.0
+var worm_lunge_speed: float = 900.0         # dinaikkan dari 700 supaya dash panjang tetap ~1 detik
+var worm_lunge_distance: float = 900.0    # panjang dash = panjang garis peringatan (dari 500)
+var worm_recover_time: float = 0.5        # diam sesaat setelah dash, lalu melayang lagi
+var worm_contact_damage: int = 25         # kalau badan saat dash menyentuh player
+var worm_contact_padding: float = 14.0    # tambahan jarak sentuh (kira-kira jari-jari player)
+var worm_lunge_shake_intensity: float = 3.0
+var worm_lunge_shake_duration: float = 0.15
+
+# Ledakan saat mati: GARIS sepanjang badan (ikut lengkungannya), bukan
+# lingkaran. Kill dari ledakan ini = event chain dengan depth 0 (seperti Heavy).
+var worm_explosion_damage: int = 40
+var worm_explosion_width: float = 170.0   # tebal garis ledakan = 2 x jangkauan. 170 -> jangkauan
+										  # 85 px dari badan (burst swarm 70 px, jadi ~1.2x swarm)
+var worm_explosion_flash_time: float = 0.35 # lama kilatan garis memudar
+var worm_explosion_flash_alpha: float = 0.45 # kepekatan kilatan garis (1 = menutupi semua)
+var worm_ring_duration: float = 0.3       # lama ring ledakan di tiap ruas
+var shake_worm_intensity: float = 16.0
+var shake_worm_duration: float = 0.4
+var hitstop_worm: float = 0.1
+var score_worm: int = 400                 # skor membunuh worm (dikali chain aktif, min x1)
+
+# Spawn berdasarkan skor, terpisah total dari spawn swarm/heavy/asteroid.
+var worm_first_score: int = 1500          # skor saat worm pertama muncul
+var worm_score_step: int = 1000000        # tiap 1 juta skor, batas worm +1 (dari 3000)
+var worm_max_cap: int = 4                 # batas keras worm bersamaan
+var worm_spawn_cooldown: float = 6.0      # jeda minimal antar spawn worm (juga setelah worm mati)
+var worm_spawn_min_player_distance: float = 500.0 # worm muncul di tepi, sejauh ini dari player
+
+# ============ BACKGROUND PARALLAX ============
+# Seberapa ikut tiap layer bergerak bersama kamera: 1.0 = menempel dunia
+# (seperti musuh), 0.0 = diam menempel layar. Makin kecil = terasa makin jauh.
+# Urutan = Layer 1 (deep space, paling jauh) ... Layer 5 (paling dekat).
+var parallax_scroll_scales: Array[float] = [0.05, 0.15, 0.3, 0.5, 0.75]
+
+# Worm vs ledakan chain: damage burst swarm biasanya mengecil tiap langkah
+# chain (chain_damage_decay). Untuk worm, damage dari ledakan chain apa pun
+# minimal sebesar ini — jadi SETIAP ledakan yang menimpanya terasa, dan
+# kaskade besar di sekitar worm benar-benar bisa membunuhnya.
+var worm_min_chain_damage: int = 10
+var worm_healthbar_chip_delay: float = 0.25 # jeda sebelum bar "sisa damage" putih menyusul
+var worm_healthbar_chip_time: float = 0.3

@@ -1,0 +1,167 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/space_worm.gd" id="1_worm"]
+
+[sub_resource type="CircleShape2D" id="shape_head"]
+radius = 18.0
+
+[sub_resource type="CircleShape2D" id="shape_seg1"]
+radius = 15.2
+
+[sub_resource type="CircleShape2D" id="shape_seg2"]
+radius = 14.4
+
+[sub_resource type="CircleShape2D" id="shape_seg3"]
+radius = 13.6
+
+[sub_resource type="CircleShape2D" id="shape_seg4"]
+radius = 12.8
+
+[sub_resource type="CircleShape2D" id="shape_seg5"]
+radius = 11.8
+
+[sub_resource type="CircleShape2D" id="shape_seg6"]
+radius = 10.9
+
+[sub_resource type="CircleShape2D" id="shape_seg7"]
+radius = 9.9
+
+[sub_resource type="CircleShape2D" id="shape_seg8"]
+radius = 8.8
+
+[node name="SpaceWorm" type="Area2D"]
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("1_worm")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Segment8" type="Node2D" parent="Visual"]
+scale = Vector2(0.55, 0.55)
+
+[node name="Placeholder" type="Polygon2D" parent="Visual/Segment8"]
+color = Color(0.45, 0.74, 0.2, 1)
+polygon = PackedVector2Array(16.0, 0.0, 14.4, 6.9, 10.0, 12.5, 3.6, 15.6, -3.6, 15.6, -10.0, 12.5, -14.4, 6.9, -16.0, 0.0, -14.4, -6.9, -10.0, -12.5, -3.6, -15.6, 3.6, -15.6, 10.0, -12.5, 14.4, -6.9)
+
+[node name="Segment7" type="Node2D" parent="Visual"]
+scale = Vector2(0.62, 0.62)
+
+[node name="Placeholder" type="Polygon2D" parent="Visual/Segment7"]
+color = Color(0.55, 0.85, 0.25, 1)
+polygon = PackedVector2Array(16.0, 0.0, 14.4, 6.9, 10.0, 12.5, 3.6, 15.6, -3.6, 15.6, -10.0, 12.5, -14.4, 6.9, -16.0, 0.0, -14.4, -6.9, -10.0, -12.5, -3.6, -15.6, 3.6, -15.6, 10.0, -12.5, 14.4, -6.9)
+
+[node name="Segment6" type="Node2D" parent="Visual"]
+scale = Vector2(0.68, 0.68)
+
+[node name="Placeholder" type="Polygon2D" parent="Visual/Segment6"]
+color = Color(0.45, 0.74, 0.2, 1)
+polygon = PackedVector2Array(16.0, 0.0, 14.4, 6.9, 10.0, 12.5, 3.6, 15.6, -3.6, 15.6, -10.0, 12.5, -14.4, 6.9, -16.0, 0.0, -14.4, -6.9, -10.0, -12.5, -3.6, -15.6, 3.6, -15.6, 10.0, -12.5, 14.4, -6.9)
+
+[node name="Segment5" type="Node2D" parent="Visual"]
+scale = Vector2(0.74, 0.74)
+
+[node name="Placeholder" type="Polygon2D" parent="Visual/Segment5"]
+color = Color(0.55, 0.85, 0.25, 1)
+polygon = PackedVector2Array(16.0, 0.0, 14.4, 6.9, 10.0, 12.5, 3.6, 15.6, -3.6, 15.6, -10.0, 12.5, -14.4, 6.9, -16.0, 0.0, -14.4, -6.9, -10.0, -12.5, -3.6, -15.6, 3.6, -15.6, 10.0, -12.5, 14.4, -6.9)
+
+[node name="Segment4" type="Node2D" parent="Visual"]
+scale = Vector2(0.8, 0.8)
+
+[node name="Placeholder" type="Polygon2D" parent="Visual/Segment4"]
+color = Color(0.45, 0.74, 0.2, 1)
+polygon = PackedVector2Array(16.0, 0.0, 14.4, 6.9, 10.0, 12.5, 3.6, 15.6, -3.6, 15.6, -10.0, 12.5, -14.4, 6.9, -16.0, 0.0, -14.4, -6.9, -10.0, -12.5, -3.6, -15.6, 3.6, -15.6, 10.0, -12.5, 14.4, -6.9)
+
+[node name="Segment3" type="Node2D" parent="Visual"]
+scale = Vector2(0.85, 0.85)
+
+[node name="Placeholder" type="Polygon2D" parent="Visual/Segment3"]
+color = Color(0.55, 0.85, 0.25, 1)
+polygon = PackedVector2Array(16.0, 0.0, 14.4, 6.9, 10.0, 12.5, 3.6, 15.6, -3.6, 15.6, -10.0, 12.5, -14.4, 6.9, -16.0, 0.0, -14.4, -6.9, -10.0, -12.5, -3.6, -15.6, 3.6, -15.6, 10.0, -12.5, 14.4, -6.9)
+
+[node name="Segment2" type="Node2D" parent="Visual"]
+scale = Vector2(0.9, 0.9)
+
+[node name="Placeholder" type="Polygon2D" parent="Visual/Segment2"]
+color = Color(0.45, 0.74, 0.2, 1)
+polygon = PackedVector2Array(16.0, 0.0, 14.4, 6.9, 10.0, 12.5, 3.6, 15.6, -3.6, 15.6, -10.0, 12.5, -14.4, 6.9, -16.0, 0.0, -14.4, -6.9, -10.0, -12.5, -3.6, -15.6, 3.6, -15.6, 10.0, -12.5, 14.4, -6.9)
+
+[node name="Segment1" type="Node2D" parent="Visual"]
+scale = Vector2(0.95, 0.95)
+
+[node name="Placeholder" type="Polygon2D" parent="Visual/Segment1"]
+color = Color(0.55, 0.85, 0.25, 1)
+polygon = PackedVector2Array(16.0, 0.0, 14.4, 6.9, 10.0, 12.5, 3.6, 15.6, -3.6, 15.6, -10.0, 12.5, -14.4, 6.9, -16.0, 0.0, -14.4, -6.9, -10.0, -12.5, -3.6, -15.6, 3.6, -15.6, 10.0, -12.5, 14.4, -6.9)
+
+[node name="Head" type="Node2D" parent="Visual"]
+
+[node name="Placeholder" type="Polygon2D" parent="Visual/Head"]
+color = Color(0.6, 0.9, 0.3, 1)
+polygon = PackedVector2Array(22.0, 0.0, 20.3, 6.9, 15.6, 12.7, 8.4, 16.6, 0.0, 18.0, -8.4, 16.6, -15.6, 12.7, -20.3, 6.9, -22.0, 0.0, -20.3, -6.9, -15.6, -12.7, -8.4, -16.6, -0.0, -18.0, 8.4, -16.6, 15.6, -12.7, 20.3, -6.9)
+
+[node name="EyePlaceholder" type="Polygon2D" parent="Visual/Head"]
+color = Color(0.25, 0.45, 0.08, 1)
+polygon = PackedVector2Array(8, -10, 18, -7, 22, 0, 18, 7, 8, 10)
+
+[node name="HeadShape" type="CollisionShape2D" parent="."]
+shape = SubResource("shape_head")
+
+[node name="SegmentShape1" type="CollisionShape2D" parent="."]
+shape = SubResource("shape_seg1")
+
+[node name="SegmentShape2" type="CollisionShape2D" parent="."]
+shape = SubResource("shape_seg2")
+
+[node name="SegmentShape3" type="CollisionShape2D" parent="."]
+shape = SubResource("shape_seg3")
+
+[node name="SegmentShape4" type="CollisionShape2D" parent="."]
+shape = SubResource("shape_seg4")
+
+[node name="SegmentShape5" type="CollisionShape2D" parent="."]
+shape = SubResource("shape_seg5")
+
+[node name="SegmentShape6" type="CollisionShape2D" parent="."]
+shape = SubResource("shape_seg6")
+
+[node name="SegmentShape7" type="CollisionShape2D" parent="."]
+shape = SubResource("shape_seg7")
+
+[node name="SegmentShape8" type="CollisionShape2D" parent="."]
+shape = SubResource("shape_seg8")
+
+[node name="TelegraphLine" type="Line2D" parent="."]
+visible = false
+z_index = -1
+width = 6.0
+default_color = Color(1, 0.3, 0.25, 0.8)
+begin_cap_mode = 2
+end_cap_mode = 2
+
+[node name="HealthBar" type="Node2D" parent="."]
+visible = false
+z_index = 10
+position = Vector2(0, -36)
+
+[node name="Back" type="ColorRect" parent="HealthBar"]
+offset_left = -23.0
+offset_top = -3.0
+offset_right = 23.0
+offset_bottom = 3.0
+mouse_filter = 2
+color = Color(0.05, 0.05, 0.1, 0.85)
+
+[node name="Chip" type="ColorRect" parent="HealthBar"]
+offset_left = -22.0
+offset_top = -2.0
+offset_right = 22.0
+offset_bottom = 2.0
+mouse_filter = 2
+color = Color(1, 0.95, 0.8, 1)
+
+[node name="Fill" type="ColorRect" parent="HealthBar"]
+offset_left = -22.0
+offset_top = -2.0
+offset_right = 22.0
+offset_bottom = 2.0
+mouse_filter = 2
+color = Color(1, 0.35, 0.28, 1)
