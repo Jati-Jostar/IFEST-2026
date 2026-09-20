@@ -192,19 +192,31 @@ custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Prompt" type="Label" parent="MenuUI/Center/VBox"]
+[node name="MainButtons" type="VBoxContainer" parent="MenuUI/Center/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_type_variation = &"HudLabel"
-theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
-text = "TEKAN SPACE UNTUK MULAI"
-horizontal_alignment = 1
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="StartButton" type="Button" parent="MenuUI/Center/VBox/MainButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "MULAI"
+
+[node name="OptionsButton" type="Button" parent="MenuUI/Center/VBox/MainButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "OPTIONS"
 
 [node name="Controls" type="Label" parent="MenuUI/Center/VBox"]
 layout_mode = 2
 theme_type_variation = &"SmallLabel"
 theme_override_colors/font_color = Color(0.29, 0.282, 0.388, 1)
-text = "WASD gerak · KLIK tembak · Q singularity · E nuke · R restart"
+text = "WASD gerak · KLIK tembak · Q singularity · E nuke · F laser · ESC jeda"
 horizontal_alignment = 1
 
 [node name="CreditLeft" type="Label" parent="MenuUI"]
@@ -236,6 +248,113 @@ theme_type_variation = &"SmallLabel"
 theme_override_colors/font_color = Color(0.29, 0.282, 0.388, 1)
 text = "SFX: Kenney.nl"
 horizontal_alignment = 2
+
+[node name="OptionsPanel" type="Control" parent="MenuUI"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="MenuUI/OptionsPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.055, 0.051, 0.122, 0.97)
+
+[node name="Center" type="CenterContainer" parent="MenuUI/OptionsPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="MenuUI/OptionsPanel/Center"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Title" type="Label" parent="MenuUI/OptionsPanel/Center/VBox"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
+text = "OPTIONS"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="MenuUI/OptionsPanel/Center/VBox"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="MusicRow" type="HBoxContainer" parent="MenuUI/OptionsPanel/Center/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Label" type="Label" parent="MenuUI/OptionsPanel/Center/VBox/MusicRow"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_type_variation = &"BodyLabel"
+theme_override_colors/font_color = Color(0.486, 0.486, 0.69, 1)
+text = "MUSIK"
+
+[node name="MusicSlider" type="HSlider" parent="MenuUI/OptionsPanel/Center/VBox/MusicRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 24)
+layout_mode = 2
+max_value = 1.0
+step = 0.05
+value = 1.0
+
+[node name="MusicValue" type="Label" parent="MenuUI/OptionsPanel/Center/VBox/MusicRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_type_variation = &"BodyLabel"
+theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
+text = "100%"
+horizontal_alignment = 2
+
+[node name="SfxRow" type="HBoxContainer" parent="MenuUI/OptionsPanel/Center/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Label" type="Label" parent="MenuUI/OptionsPanel/Center/VBox/SfxRow"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_type_variation = &"BodyLabel"
+theme_override_colors/font_color = Color(0.486, 0.486, 0.69, 1)
+text = "EFEK SUARA"
+
+[node name="SfxSlider" type="HSlider" parent="MenuUI/OptionsPanel/Center/VBox/SfxRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 24)
+layout_mode = 2
+max_value = 1.0
+step = 0.05
+value = 1.0
+
+[node name="SfxValue" type="Label" parent="MenuUI/OptionsPanel/Center/VBox/SfxRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_type_variation = &"BodyLabel"
+theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
+text = "100%"
+horizontal_alignment = 2
+
+[node name="Spacer2" type="Control" parent="MenuUI/OptionsPanel/Center/VBox"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="MenuUI/OptionsPanel/Center/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "KEMBALI"
 
 [node name="Fader" type="ColorRect" parent="MenuUI"]
 anchors_preset = 15

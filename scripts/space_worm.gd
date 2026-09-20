@@ -198,6 +198,16 @@ func distance_to_body(p: Vector2) -> float:
 	return best
 
 
+# Jarak dari segmen a-b (mis. beam laser) ke TEPI bagian badan terdekat.
+func distance_to_segment(a: Vector2, b: Vector2) -> float:
+	var c := Geometry2D.get_closest_point_to_segment(global_position, a, b)
+	var best := maxf(c.distance_to(global_position) - _shape_radius(head_shape), 0.0)
+	for s in _segment_shapes:
+		c = Geometry2D.get_closest_point_to_segment(s.global_position, a, b)
+		best = minf(best, maxf(c.distance_to(s.global_position) - _shape_radius(s), 0.0))
+	return best
+
+
 # ---------------- DRIFT ----------------
 
 # Melayang pelan: kepala berbelok bertahap (worm_turn_rate) ke arah target,
@@ -347,9 +357,9 @@ func _update_health_bar() -> void:
 	if _chip_tween != null and _chip_tween.is_valid():
 		_chip_tween.kill()
 	_chip_tween = create_tween()
-	_chip_tween.tween_interval(GameBalance.worm_healthbar_chip_delay)
+	_chip_tween.tween_interval(GameBalance.healthbar_chip_delay)
 	_chip_tween.tween_property(health_chip, "size:x", health_fill.size.x,
-		GameBalance.worm_healthbar_chip_time).set_ease(Tween.EASE_OUT)
+		GameBalance.healthbar_chip_time).set_ease(Tween.EASE_OUT)
 
 
 # Mati: kirim bentuk badan TERAKHIR ke ChainManager, yang meledakkan garis

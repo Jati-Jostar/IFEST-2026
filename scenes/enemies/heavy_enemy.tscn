@@ -20,3 +20,32 @@ texture = ExtResource("2_n2l02")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=586706815]
 scale = Vector2(3.035, 3.035)
 shape = SubResource("CircleShape2D_heavy")
+
+[node name="HealthBar" type="Node2D" parent="."]
+visible = false
+z_index = 10
+position = Vector2(0, -82)
+
+[node name="Back" type="ColorRect" parent="HealthBar"]
+offset_left = -34.0
+offset_top = -4.0
+offset_right = 34.0
+offset_bottom = 4.0
+mouse_filter = 2
+color = Color(0.05, 0.05, 0.1, 0.85)
+
+[node name="Chip" type="ColorRect" parent="HealthBar"]
+offset_left = -32.0
+offset_top = -2.0
+offset_right = 32.0
+offset_bottom = 2.0
+mouse_filter = 2
+color = Color(1, 0.95, 0.8, 1)
+
+[node name="Fill" type="ColorRect" parent="HealthBar"]
+offset_left = -32.0
+offset_top = -2.0
+offset_right = 32.0
+offset_bottom = 2.0
+mouse_filter = 2
+color = Color(1, 0.35, 0.28, 1)

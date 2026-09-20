@@ -298,5 +298,55 @@ var parallax_scroll_scales: Array[float] = [0.05, 0.15, 0.3, 0.5, 0.75]
 # minimal sebesar ini — jadi SETIAP ledakan yang menimpanya terasa, dan
 # kaskade besar di sekitar worm benar-benar bisa membunuhnya.
 var worm_min_chain_damage: int = 10
-var worm_healthbar_chip_delay: float = 0.25 # jeda sebelum bar "sisa damage" putih menyusul
-var worm_healthbar_chip_time: float = 0.3
+
+# ============ CHARGED LASER (didapat dari SKOR, bukan pickup) ============
+# Laser READY tiap kali skor melewati ambang berikutnya. Ambang makin mahal.
+# Maksimal 1 charge dipegang. Setelah ambang di daftar habis, ambang
+# berikutnya = ambang terakhir + laser_threshold_step, dst.
+var laser_score_thresholds: Array[int] = [100000, 5000000, 9000000]
+var laser_threshold_step: int = 5000000
+var laser_charge_color: Color = Color("#4DA6FF")   # biru laser (bar READY, ring, beam)
+var laser_gauge_pulse_time: float = 0.9            # satu denyut bar saat READY
+# --- Wind-up (charge-up): ring biru menyusut ke kapal, lalu beam menembak.
+var laser_charge_time: float = 0.7
+var laser_charge_ring_count: int = 3
+var laser_charge_ring_start_radius: float = 140.0
+var laser_charge_ring_width: float = 2.0
+var laser_charge_shake: float = 2.0       # getaran yang membesar selama wind-up
+var laser_charge_ship_glow: float = 1.7   # kapal makin terang saat ring tiba (1 = normal)
+# --- Beam
+var laser_duration: float = 3.5           # detik tembakan terus-menerus
+var laser_width: float = 26.0
+var laser_range: float = 1200.0           # praktis sampai luar layar
+var laser_damage_per_second: float = 400.0
+var laser_tick_interval: float = 0.05     # damage diberikan tiap interval ini (bukan tiap frame)
+var laser_move_speed_mult: float = 0.55   # kecepatan gerak player saat menembak laser
+var laser_beam_shake: float = 5.0         # getaran selama beam aktif
+var laser_zoom: float = 0.97              # kamera sedikit zoom-out saat beam aktif
+var laser_zoom_time: float = 0.25
+var laser_fade_time: float = 0.2          # beam memudar saat selesai (tanpa damage)
+var laser_end_flash_strength: float = 0.25
+var laser_no_charge_flash_time: float = 0.35 # gauge berkedip kalau F ditekan tanpa charge
+var laser_fire_loop_pitch: float = 1.6     # pitch suara loop beam (placeholder = suara Singularity, dinaikkan supaya beda)
+
+# ============ AUDIO — PERFORMA ============
+# Event suara yang SAMA tidak diputar ulang lebih cepat dari ini (detik).
+# Saat kaskade besar puluhan musuh mati di frame yang sama; memutar
+# puluhan suara identik sekaligus tidak terdengar bedanya tapi sangat
+# berat (tiap play me-restart decoder OGG), terutama di browser.
+var audio_same_event_min_interval: float = 0.03
+
+# ============ HEAL PICKUP (tanda plus hijau) ============
+# Memulihkan HP. Hanya muncul saat HP player belum penuh, dan hanya bisa
+# diambil kalau masih kurang dari maksimal — jadi tidak pernah terbuang.
+var heal_amount: int = 30
+var heal_spawn_interval_min: float = 20.0
+var heal_spawn_interval_max: float = 32.0
+var heal_max_on_field: int = 1
+
+# ============ BAR HP MUSUH (Heavy & Space Worm) ============
+# Bar kecil di atas musuh bernyawa tebal: muncul setelah kena hit pertama.
+# Bagian putih ("chip") menyusul turun sedikit terlambat, jadi beberapa
+# ledakan beruntun terbaca sebagai damage yang MENUMPUK.
+var healthbar_chip_delay: float = 0.25
+var healthbar_chip_time: float = 0.3

@@ -70,3 +70,4 @@ position = Vector2(649, 377)
 script = ExtResource("4_chain")
 
 [node name="UI" parent="." unique_id=1683246040 instance=ExtResource("5_ui")]
+process_mode = 3

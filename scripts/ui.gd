@@ -9,25 +9,63 @@ extends CanvasLayer
 @onready var chain_label: Label = $ChainLabel
 @onready var singularity_label: Label = $SingularityLabel
 @onready var nuke_label: Label = $NukeLabel
+@onready var laser_gauge: Control = $LaserGauge
+@onready var laser_label: Label = $LaserGauge/Label
+@onready var laser_fill: ColorRect = $LaserGauge/Back/Fill
 @onready var game_over_panel: Control = $GameOverPanel
 @onready var final_score_label: Label = $GameOverPanel/Center/VBox/FinalScore
 @onready var best_chain_label: Label = $GameOverPanel/Center/VBox/BestChain
 @onready var chain_record_label: Label = $GameOverPanel/Center/VBox/ChainRecord
 @onready var score_record_label: Label = $GameOverPanel/Center/VBox/ScoreRecord
 @onready var fader: ColorRect = $Fader
+@onready var pause_menu: Control = $PauseMenu
 
-const COLOR_READY_SINGULARITY := Color(0.45, 0.65, 1.0)
+const COLOR_READY_SINGULARITY := Color(0.75, 0.45, 1.0)   # ungu (sama dengan ikonnya) — biru dipakai laser
 const COLOR_READY_NUKE := Color(1.0, 0.85, 0.3)
 const COLOR_EMPTY := Color(0.45, 0.45, 0.5)
 const COLOR_AMMO_OK := Color(0.85, 0.9, 1.0)
 const COLOR_AMMO_LOW := Color(1.0, 0.75, 0.25)
 const COLOR_AMMO_EMPTY := Color(1.0, 0.3, 0.25)
+const COLOR_LASER_FILLING := Color(0.29, 0.282, 0.388)   # redup saat mengisi
+const COLOR_LASER_LABEL := Color(0.486, 0.486, 0.69)
 
 var _chain_fade_tween: Tween
 var _ammo_blink_tween: Tween
 var _sing_pulse: Tween
 var _nuke_pulse: Tween
+var _laser_pulse: Tween
+var _laser_was_ready: bool = false
 var _fade_tween: Tween
+
+# Ditangani main.gd (yang tahu cara pause/restart/pindah scene).
+signal resume_pressed
+signal restart_pressed
+signal menu_pressed
+# ESC ditangani di sini (bukan main.gd) karena UI ini process_mode ALWAYS,
+# jadi tetap menerima input saat pohon scene sedang di-pause.
+signal pause_toggle_requested
+
+
+func _ready() -> void:
+	# Semua tombol UI -> signal, supaya UI tidak perlu tahu soal scene.
+	$PauseMenu/Center/VBox/ResumeButton.pressed.connect(resume_pressed.emit)
+	$PauseMenu/Center/VBox/RestartButton.pressed.connect(restart_pressed.emit)
+	$PauseMenu/Center/VBox/MenuButton.pressed.connect(menu_pressed.emit)
+	$GameOverPanel/Center/VBox/Buttons/RetryButton.pressed.connect(restart_pressed.emit)
+	$GameOverPanel/Center/VBox/Buttons/MenuButton.pressed.connect(menu_pressed.emit)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("back_to_menu"):
+		pause_toggle_requested.emit()
+		get_viewport().set_input_as_handled()
+
+
+# Buka/tutup layar jeda. Pohon scene di-pause oleh main.gd.
+func set_paused(paused: bool) -> void:
+	pause_menu.visible = paused
+	if paused:
+		$PauseMenu/Center/VBox/ResumeButton.grab_focus()
 
 
 func set_hp(hp: int) -> void:
@@ -115,6 +153,40 @@ func set_chain(count: int) -> void:
 	Juice.punch_scale(chain_label, 1.2, 0.15)
 
 
+# Laser: bar redup saat mengisi; saat READY bar penuh biru terang, teks
+# READY, dan seluruh gauge berdenyut — tidak boleh sampai terlewat.
+func set_laser(progress: float, ready: bool) -> void:
+	var back := laser_fill.get_parent() as Control
+	laser_fill.size.x = (back.size.x - 4.0) * (1.0 if ready else progress)
+	if ready:
+		laser_fill.color = GameBalance.laser_charge_color
+		laser_label.text = "[F] LASER: READY ●"
+		laser_label.add_theme_color_override("font_color", GameBalance.laser_charge_color)
+		if not _laser_was_ready:
+			laser_gauge.pivot_offset = laser_gauge.size / 2.0
+			Juice.punch_scale(laser_gauge, 1.15, 0.2)
+			_laser_pulse = laser_gauge.create_tween()
+			_laser_pulse.set_loops()
+			var half := GameBalance.laser_gauge_pulse_time * 0.5
+			_laser_pulse.tween_property(laser_gauge, "modulate:a", 0.55, half).set_trans(Tween.TRANS_SINE)
+			_laser_pulse.tween_property(laser_gauge, "modulate:a", 1.0, half).set_trans(Tween.TRANS_SINE)
+	else:
+		if _laser_pulse != null and _laser_pulse.is_valid():
+			_laser_pulse.kill()
+		laser_gauge.modulate = Color.WHITE
+		laser_fill.color = COLOR_LASER_FILLING
+		laser_label.text = "[F] LASER  %d%%" % int(progress * 100.0)
+		laser_label.add_theme_color_override("font_color", COLOR_LASER_LABEL)
+	_laser_was_ready = ready
+
+
+# F ditekan tanpa charge: gauge berkedip merah sebentar + bergetar kecil.
+func flash_laser_denied() -> void:
+	laser_gauge.pivot_offset = laser_gauge.size / 2.0
+	Juice.flash(laser_gauge, Color(1.6, 0.5, 0.5), GameBalance.laser_no_charge_flash_time)
+	Juice.punch_scale(laser_gauge, 1.08, 0.15)
+
+
 # Layar game over: fade in, bukan muncul mendadak.
 # Chain terbaik run ini ditonjolkan (angka besar, warna aksen) karena chain
 # adalah inti game; rekor baru ditandai "REKOR BARU!" yang berdenyut.
@@ -125,6 +197,7 @@ func show_game_over(score: int, best_chain: int,
 	_show_record_mark(chain_record_label, new_best_chain)
 	_show_record_mark(score_record_label, new_high_score)
 	game_over_panel.visible = true
+	$GameOverPanel/Center/VBox/Buttons/RetryButton.grab_focus()
 	game_over_panel.modulate = Color(1, 1, 1, 0)
 	var tw := game_over_panel.create_tween()
 	tw.set_ignore_time_scale(true)

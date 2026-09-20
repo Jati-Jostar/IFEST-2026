@@ -10,6 +10,7 @@ const HEAVY_SCENE := preload("res://scenes/enemies/heavy_enemy.tscn")
 const ASTEROID_SCENE := preload("res://scenes/asteroid.tscn")
 const PICKUP_SCENE := preload("res://scenes/abilities/ability_pickup.tscn")
 const AMMO_PICKUP_SCENE := preload("res://scenes/abilities/ammo_pickup.tscn")
+const HEAL_PICKUP_SCENE := preload("res://scenes/abilities/heal_pickup.tscn")
 const WORM_SCENE := preload("res://scenes/enemies/space_worm.tscn")
 const MENU_SCENE := "res://scenes/main_menu.tscn"
 
@@ -24,6 +25,7 @@ var _asteroid_timer: float = 0.0
 var _pickup_timer: float = 8.0   # drop pertama cepat supaya player segera kenal ability
 var _next_pickup_is_singularity: bool = true
 var _ammo_timer: float = 3.0     # amunisi pertama muncul lebih cepat dari ability
+var _heal_timer: float = 15.0    # heal pertama tidak di awal run
 var _next_cluster_id: int = 0
 var _elapsed: float = 0.0        # waktu bermain, untuk ramp spacing
 var _game_over: bool = false
@@ -32,6 +34,8 @@ var _demo_chain_timer: float = 0.0
 var _demo_target: Node2D
 var _demo_waypoint: Vector2
 var _worm_timer: float = 0.0     # jeda antar spawn worm
+var _laser_was_ready: bool = false
+var _paused: bool = false
 
 @onready var arena_border: Line2D = $ArenaBorder
 @onready var player: CharacterBody2D = $Player
@@ -56,11 +60,20 @@ func _ready() -> void:
 	player.hp_changed.connect(ui.set_hp)
 	player.abilities_changed.connect(ui.set_abilities)
 	player.ammo_changed.connect(ui.set_ammo)
+	chain_manager.score_changed.connect(player.on_score_changed)
+	player.laser_changed.connect(ui.set_laser)
+	player.laser_changed.connect(_on_laser_changed)
+	player.laser_denied.connect(ui.flash_laser_denied)
+	ui.resume_pressed.connect(_set_paused.bind(false))
+	ui.restart_pressed.connect(_restart)
+	ui.menu_pressed.connect(_to_menu)
+	ui.pause_toggle_requested.connect(_toggle_pause)
 	player.player_died.connect(_on_player_died)
 	ui.set_hp(GameBalance.player_max_hp)
 	ui.set_score(0)
 	ui.set_abilities(false, false)
 	ui.set_ammo(GameBalance.player_max_ammo, GameBalance.player_max_ammo)
+	ui.set_laser(0.0, false)
 
 	_draw_arena_border()
 
@@ -90,7 +103,7 @@ func _process(delta: float) -> void:
 		_process_demo(delta)
 		return
 	if _game_over:
-		return  # berhenti spawn; restart tetap bisa lewat _unhandled_input
+		return  # berhenti spawn; tombol di layar game over tetap aktif
 	_elapsed += delta
 	_cluster_timer -= delta
 	if _cluster_timer <= 0.0:
@@ -111,18 +124,44 @@ func _process(delta: float) -> void:
 		_ammo_timer = GameBalance.ammo_spawn_interval
 		_try_spawn_ammo()
 	_update_worm_spawning(delta)
+	_heal_timer -= delta
+	if _heal_timer <= 0.0:
+		_heal_timer = randf_range(
+			GameBalance.heal_spawn_interval_min, GameBalance.heal_spawn_interval_max)
+		_try_spawn_heal()
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if _leaving or demo_mode:
+# ESC = buka/tutup layar jeda (event-nya datang dari UI, lihat ui.gd).
+# Restart & keluar ke menu lewat TOMBOL, bukan tombol keyboard.
+func _toggle_pause() -> void:
+	if _leaving or demo_mode or _game_over:
 		return
-	if event.is_action_pressed("restart"):
-		_leave(func() -> void: get_tree().reload_current_scene())
-	elif _game_over and event.is_action_pressed("back_to_menu"):
-		_leave(func() -> void: get_tree().change_scene_to_file(MENU_SCENE))
+	_set_paused(not _paused)
 
 
-# R (restart) dan ESC (menu): layar fade gelap dulu, baru pindah scene.
+# Jeda: pohon scene berhenti, layar jeda muncul (UI-nya process_mode
+# ALWAYS jadi tombolnya tetap bisa diklik).
+func _set_paused(paused: bool) -> void:
+	if _leaving or _game_over:
+		return
+	_paused = paused
+	get_tree().paused = paused
+	ui.set_paused(paused)
+
+
+func _restart() -> void:
+	get_tree().paused = false
+	_paused = false
+	_leave(func() -> void: get_tree().reload_current_scene())
+
+
+func _to_menu() -> void:
+	get_tree().paused = false
+	_paused = false
+	_leave(func() -> void: get_tree().change_scene_to_file(MENU_SCENE))
+
+
+# Pindah scene selalu lewat fade gelap dulu.
 # Rekor sudah tersimpan saat player mati, jadi aman keluar kapan saja.
 func _leave(change_scene: Callable) -> void:
 	_leaving = true
@@ -130,6 +169,14 @@ func _leave(change_scene: Callable) -> void:
 	Engine.time_scale = 1.0
 	Juice.base_time_scale = 1.0
 	change_scene.call()
+
+
+# Catatan playtest (hanya di build debug): kapan laser pertama kali READY,
+# untuk menyetel laser_score_thresholds.
+func _on_laser_changed(_progress: float, ready: bool) -> void:
+	if ready and not _laser_was_ready and OS.is_debug_build():
+		print("[LASER] READY  t=%.1f detik  skor=%d" % [_elapsed, chain_manager.score])
+	_laser_was_ready = ready
 
 
 func _on_player_died() -> void:
@@ -263,6 +310,20 @@ func _random_edge_position() -> Vector2:
 			return Vector2(0.0, randf_range(0.0, h))      # kiri
 		_:
 			return Vector2(w, randf_range(0.0, h))        # kanan
+
+
+# Heal hanya muncul kalau HP player sedang kurang — kalau penuh, dicoba
+# lagi sebentar kemudian supaya arena tidak penuh pickup yang tak terpakai.
+func _try_spawn_heal() -> void:
+	if get_tree().get_nodes_in_group("heal_pickups").size() >= GameBalance.heal_max_on_field:
+		return
+	if player.hp >= GameBalance.player_max_hp:
+		_heal_timer = 5.0
+		return
+	var heal := HEAL_PICKUP_SCENE.instantiate()
+	heal.position = _random_inner_position()
+	add_child(heal)
+	heal.reset_physics_interpolation()
 
 
 # ---------------- SPACE WORM ----------------

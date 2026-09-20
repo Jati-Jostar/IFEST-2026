@@ -11,6 +11,7 @@ extends CharacterBody2D
 const PROJECTILE_SCENE := preload("res://scenes/projectile.tscn")
 const SINGULARITY_SCENE := preload("res://scenes/abilities/singularity.tscn")
 const NUKE_SCENE := preload("res://scenes/abilities/nuke.tscn")
+const LASER_SCENE := preload("res://scenes/abilities/laser_beam.tscn")
 
 # Jarak minimal pusat player dari tepi arena (kira-kira radius collision).
 const ARENA_MARGIN := 16.0
@@ -21,11 +22,20 @@ signal player_died
 signal hp_changed(hp: int)
 signal abilities_changed(has_singularity: bool, has_nuke: bool)
 signal ammo_changed(ammo: int, max_ammo: int)
+# progress = 0..1 menuju ambang skor berikutnya; ready = charge laser siap.
+signal laser_changed(progress: float, ready: bool)
+# F ditekan tanpa charge — HUD mengedipkan gauge supaya player paham kenapa.
+signal laser_denied
 
 var hp: int = 100
 var has_singularity: bool = false
 var has_nuke: bool = false
 var ammo: int = 0
+var has_laser: bool = false       # maks 1 charge (tidak menumpuk)
+var _laser_index: int = 0         # ambang ke berapa yang sedang dituju
+var _laser_prev_threshold: int = 0 # ambang sebelumnya (awal bar)
+var _last_score: int = 0
+var _laser_active: bool = false   # wind-up + beam: gerak lambat, tidak bisa menembak biasa
 var _fire_cooldown: float = 0.0
 var _invuln_left: float = 0.0
 var _is_dead: bool = false
@@ -69,6 +79,61 @@ func _physics_process(delta: float) -> void:
 	_handle_abilities()
 
 
+# ---------------- CHARGED LASER: charge dari skor ----------------
+
+# Ambang ke-i: dari daftar GameBalance, lalu +laser_threshold_step setelahnya.
+func laser_threshold(i: int) -> int:
+	var list := GameBalance.laser_score_thresholds
+	if i < list.size():
+		return list[i]
+	return list[-1] + GameBalance.laser_threshold_step * (i - list.size() + 1)
+
+
+# Dipanggil (via signal) setiap skor berubah.
+func on_score_changed(score: int) -> void:
+	_last_score = score
+	_update_laser()
+
+
+# Charge dipakai: maju ke ambang berikutnya. Kalau skor ternyata sudah
+# melewati ambang itu juga, laser langsung READY lagi — progres tidak
+# pernah hilang, tapi tetap hanya 1 charge yang dipegang sekaligus.
+func consume_laser() -> bool:
+	if not has_laser:
+		return false
+	has_laser = false
+	_laser_prev_threshold = laser_threshold(_laser_index)
+	_laser_index += 1
+	_update_laser()
+	return true
+
+
+# F: dengan charge -> wind-up dimulai (tidak bisa dibatalkan). Tanpa
+# charge -> tidak terjadi apa-apa selain gauge berkedip di HUD.
+func _try_fire_laser() -> void:
+	if _laser_active:
+		return
+	if not consume_laser():
+		laser_denied.emit()
+		return
+	_laser_active = true
+	var beam := LASER_SCENE.instantiate()
+	beam.finished.connect(func() -> void: _laser_active = false)
+	add_child(beam)
+
+
+func _update_laser() -> void:
+	var target := laser_threshold(_laser_index)
+	if not has_laser and _last_score >= target:
+		has_laser = true
+		AudioManager.play("laser_ready", global_position)
+	var progress := 1.0
+	if not has_laser:
+		progress = clampf(float(_last_score - _laser_prev_threshold)
+			/ float(target - _laser_prev_threshold), 0.0, 1.0)
+	laser_changed.emit(progress, has_laser)
+
+
 # Dipanggil pickup saat disentuh. Mengembalikan false jika slot penuh
 # (pickup dibiarkan di lapangan).
 func collect_ability(ability_type: String) -> bool:
@@ -93,6 +158,8 @@ func _handle_abilities() -> void:
 		has_nuke = false
 		abilities_changed.emit(has_singularity, has_nuke)
 		_spawn_ability(NUKE_SCENE)
+	if Input.is_action_just_pressed("ability_laser"):
+		_try_fire_laser()
 
 
 # Ability muncul di posisi kursor mouse (di-clamp ke dalam arena).
@@ -104,6 +171,18 @@ func _spawn_ability(scene: PackedScene) -> void:
 	ability.position = pos
 	get_tree().current_scene.add_child(ability)
 	ability.reset_physics_interpolation()
+
+
+# Dipanggil pickup heal. Gagal (false) kalau HP sudah penuh — pickup
+# dibiarkan di lapangan untuk diambil nanti.
+func heal(amount: int) -> bool:
+	if _is_dead or hp >= GameBalance.player_max_hp:
+		return false
+	hp = mini(hp + amount, GameBalance.player_max_hp)
+	hp_changed.emit(hp)
+	Juice.flash(visual, Color(0.4, 1.6, 0.8), 0.25)
+	Juice.floating_text(global_position, "+%d HP" % amount, Color(0.45, 1.0, 0.65), 22.0)
+	return true
 
 
 func take_damage(amount: int) -> void:
@@ -133,6 +212,8 @@ func _handle_movement() -> void:
 	if thruster != null:
 		thruster.visible = input_dir != Vector2.ZERO
 	var speed := speed_override if speed_override > 0.0 else GameBalance.player_speed
+	if _laser_active:
+		speed *= GameBalance.laser_move_speed_mult
 	velocity = input_dir * speed
 	move_and_slide()
 	global_position = global_position.clamp(
@@ -150,6 +231,8 @@ func _handle_aim() -> void:
 
 func _handle_shooting(delta: float) -> void:
 	_fire_cooldown -= delta
+	if _laser_active:
+		return
 	if _shoot_locked:
 		_shoot_locked = Input.is_action_pressed("shoot")
 		return

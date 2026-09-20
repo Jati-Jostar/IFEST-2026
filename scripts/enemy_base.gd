@@ -31,6 +31,12 @@ var _cohesion: Vector2 = Vector2.ZERO     # cache tarikan ke pusat cluster sendi
 var _sep_frame_offset: int = 0            # sebar beban update antar frame
 
 @onready var visual: Node2D = $Visual
+# Bar HP opsional: hanya ada di musuh bernyawa tebal (mis. Heavy). Musuh
+# tanpa node "HealthBar" tetap jalan normal.
+@onready var health_bar: Node2D = get_node_or_null("HealthBar")
+
+var _bar_width: float = 0.0
+var _chip_tween: Tween
 
 
 func _ready() -> void:
@@ -45,6 +51,8 @@ func _ready() -> void:
 	if speed_override > 0.0:
 		speed = speed_override
 	hp = max_hp
+	if health_bar != null:
+		_bar_width = (health_bar.get_node("Fill") as ColorRect).size.x
 	_player = get_tree().get_first_node_in_group("player")
 	_sep_frame_offset = randi() % maxi(GameBalance.separation_update_interval, 1)
 
@@ -154,9 +162,26 @@ func take_damage(amount: int, source: String = "bullet", depth: int = 0) -> void
 	if hp <= 0:
 		die(source, depth)
 		return
+	_update_health_bar()
 	# Feedback kena hit (hanya kalau masih hidup).
 	Juice.flash(visual, Color(6, 6, 6), GameBalance.hit_flash_duration)
 	Juice.punch_scale(visual, GameBalance.hit_punch_amount, GameBalance.hit_punch_duration)
+
+
+# Bar merah langsung turun; bar putih menyusul -> damage bertubi terbaca.
+func _update_health_bar() -> void:
+	if health_bar == null:
+		return
+	health_bar.visible = true
+	var fill := health_bar.get_node("Fill") as ColorRect
+	var chip := health_bar.get_node("Chip") as ColorRect
+	fill.size.x = _bar_width * clampf(float(hp) / float(max_hp), 0.0, 1.0)
+	if _chip_tween != null and _chip_tween.is_valid():
+		_chip_tween.kill()
+	_chip_tween = create_tween()
+	_chip_tween.tween_interval(GameBalance.healthbar_chip_delay)
+	_chip_tween.tween_property(chip, "size:x", fill.size.x,
+		GameBalance.healthbar_chip_time).set_ease(Tween.EASE_OUT)
 
 
 func die(killed_by: String = "bullet", depth: int = 0) -> void:

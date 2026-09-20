@@ -70,6 +70,41 @@ theme_type_variation = &"BodyLabel"
 text = "[E] NUKE: —"
 horizontal_alignment = 2
 
+[node name="LaserGauge" type="Control" parent="."]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -340.0
+offset_top = -122.0
+offset_right = -16.0
+offset_bottom = -76.0
+mouse_filter = 2
+
+[node name="Label" type="Label" parent="LaserGauge"]
+anchor_right = 1.0
+offset_bottom = 26.0
+theme_type_variation = &"BodyLabel"
+text = "[F] LASER"
+horizontal_alignment = 2
+
+[node name="Back" type="ColorRect" parent="LaserGauge"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -200.0
+offset_top = 32.0
+offset_bottom = 42.0
+mouse_filter = 2
+color = Color(0.08, 0.08, 0.15, 0.85)
+
+[node name="Fill" type="ColorRect" parent="LaserGauge/Back"]
+offset_left = 2.0
+offset_top = 2.0
+offset_right = 2.0
+offset_bottom = 8.0
+mouse_filter = 2
+color = Color(0.29, 0.282, 0.388, 1)
+
 [node name="ControlsLabel" type="Label" parent="."]
 anchor_top = 1.0
 anchor_bottom = 1.0
@@ -79,9 +114,10 @@ offset_right = 500.0
 offset_bottom = -14.0
 theme_type_variation = &"SmallLabel"
 theme_override_colors/font_color = Color(0.6, 0.6, 0.7, 1)
-text = "WASD gerak | Mouse/Space tembak | Q Singularity | E Nuke | R restart"
+text = "WASD gerak | Mouse/Space tembak | Q Singularity | E Nuke | F Laser | ESC jeda"
 
 [node name="GameOverPanel" type="Control" parent="."]
+process_mode = 3
 visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -152,10 +188,65 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(0, 28)
 mouse_filter = 2
 
-[node name="RestartHint" type="Label" parent="GameOverPanel/Center/VBox"]
-theme_type_variation = &"BodyLabel"
-theme_override_colors/font_color = Color(0.7, 0.7, 0.8, 1)
-text = "R  MAIN LAGI     ·     ESC  MENU UTAMA"
+[node name="Buttons" type="HBoxContainer" parent="GameOverPanel/Center/VBox"]
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="RetryButton" type="Button" parent="GameOverPanel/Center/VBox/Buttons"]
+custom_minimum_size = Vector2(220, 0)
+text = "MAIN LAGI"
+
+[node name="MenuButton" type="Button" parent="GameOverPanel/Center/VBox/Buttons"]
+custom_minimum_size = Vector2(220, 0)
+text = "MENU UTAMA"
+
+[node name="PauseMenu" type="Control" parent="."]
+process_mode = 3
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Dim" type="ColorRect" parent="PauseMenu"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.055, 0.051, 0.122, 0.88)
+
+[node name="Center" type="CenterContainer" parent="PauseMenu"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBox" type="VBoxContainer" parent="PauseMenu/Center"]
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="Title" type="Label" parent="PauseMenu/Center/VBox"]
+theme_type_variation = &"TitleLabel"
+theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
+text = "JEDA"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="PauseMenu/Center/VBox"]
+custom_minimum_size = Vector2(0, 30)
+
+[node name="ResumeButton" type="Button" parent="PauseMenu/Center/VBox"]
+custom_minimum_size = Vector2(280, 0)
+size_flags_horizontal = 4
+text = "LANJUTKAN"
+
+[node name="RestartButton" type="Button" parent="PauseMenu/Center/VBox"]
+custom_minimum_size = Vector2(280, 0)
+size_flags_horizontal = 4
+text = "ULANGI"
+
+[node name="MenuButton" type="Button" parent="PauseMenu/Center/VBox"]
+custom_minimum_size = Vector2(280, 0)
+size_flags_horizontal = 4
+text = "MENU UTAMA"
+
+[node name="Hint" type="Label" parent="PauseMenu/Center/VBox"]
+theme_type_variation = &"SmallLabel"
+theme_override_colors/font_color = Color(0.29, 0.282, 0.388, 1)
+text = "ESC untuk lanjut"
 horizontal_alignment = 1
 
 [node name="Fader" type="ColorRect" parent="."]
