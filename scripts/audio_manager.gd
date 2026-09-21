@@ -19,10 +19,18 @@ extends Node
 const POOL_SIZE := 8
 const MUSIC_BUS := &"Music"
 const SFX_BUS := &"SFX"
+const UI_BUS := &"UI"          # bus sendiri: klik tombol tetap jelas walau SFX diredam
+const UI_POOL_SIZE := 3
 const SILENT_DB := -80.0
 
-# Slot musik latar. Seret file .ogg ke sini lewat Inspector.
-@export var music_stream: AudioStream
+# Slot musik. Seret file .ogg ke sini lewat Inspector (buka
+# scenes/audio_manager.tscn, klik node AudioManager).
+#   menu_music = lagu main menu
+#   game_music = lagu saat bermain; kalau KOSONG, lagu menu terus dipakai
+#                (tidak ada jeda / restart saat masuk game).
+@export var menu_music: AudioStream
+@export var game_music: AudioStream
+var music_stream: AudioStream       # lagu yang sedang diputar
 
 # Slot audio per event. Isi dengan preload("res://assets/audio/nama.ogg")
 # saat file audio sudah ada. Selama null, play() diam tanpa error.
@@ -51,6 +59,15 @@ var streams: Dictionary = {
 	"laser_fire_start": null,  # awal beam
 	"laser_fire_loop": preload("res://assets/audio/kenney_sci-fi-sounds/spaceEngine_001.ogg"),  # PLACEHOLDER dengung beam (play_loop, pitch dinaikkan)
 	"laser_fire_end": null,    # beam selesai
+
+	# ---- INTERFACE (main menu, pause, game over) ----
+	"ui_hover": preload("res://assets/audio/kenney_interface-sounds/select_003.ogg"),
+	"ui_click": preload("res://assets/audio/kenney_interface-sounds/click_002.ogg"),
+	"ui_confirm": preload("res://assets/audio/kenney_interface-sounds/confirmation_001.ogg"),
+	"ui_back": preload("res://assets/audio/kenney_interface-sounds/back_002.ogg"),
+	"ui_open": preload("res://assets/audio/kenney_interface-sounds/open_002.ogg"),
+	"ui_close": preload("res://assets/audio/kenney_interface-sounds/close_002.ogg"),
+	"ui_tick": preload("res://assets/audio/kenney_interface-sounds/tick_002.ogg"),
 	# SENGAJA dibiarkan kosong: "player_death" sudah berbunyi di frame yang
 	# sama saat player mati, dan dua suara sekaligus malah saling menutupi.
 	"game_over": null,
@@ -61,10 +78,20 @@ var streams: Dictionary = {
 # sangat sering (kematian swarm bisa puluhan kali per detik saat chain
 # panjang) supaya tidak menenggelamkan ledakan besar.
 var volumes: Dictionary = {
+	# Semua suara interface = 50% dari nilai awalnya (0.35 / 0.6 / 0.4).
+	"ui_hover": 0.18,
+	"ui_click": 0.3,
+	"ui_confirm": 0.3,
+	"ui_back": 0.3,
+	"ui_open": 0.3,
+	"ui_close": 0.3,
+	"ui_tick": 0.2,
 	"worm_telegraph": 0.5,
 	"worm_lunge": 0.8,
 	"swarm_death": 0.1,
 	"pickup_collect": 0.3,
+	# Sengaja sangat pelan: nada naiknya cuma bumbu di belakang ledakan.
+	# Pernah dicoba 0.35 dan terlalu menonjol.
 	"chain_increment": 0.07,
 }
 
@@ -76,6 +103,8 @@ var pitches: Dictionary = {
 }
 
 var _players: Array[AudioStreamPlayer] = []
+var _ui_players: Array[AudioStreamPlayer] = []
+var _next_ui_player: int = 0
 var _next_player: int = 0
 var _music_player: AudioStreamPlayer
 var _music_tween: Tween
@@ -93,14 +122,20 @@ func _ready() -> void:
 		add_child(p)
 		_players.append(p)
 
+	for i in UI_POOL_SIZE:
+		var up := AudioStreamPlayer.new()
+		up.bus = UI_BUS
+		add_child(up)
+		_ui_players.append(up)
+
 	apply_bus_volumes()
 
 	_music_player = AudioStreamPlayer.new()
 	_music_player.bus = MUSIC_BUS
 	_music_player.finished.connect(_on_music_finished)
 	add_child(_music_player)
-	# Musik mulai sekali saat game dibuka, lalu jalan terus.
-	play_music()
+	# Lagu menu mulai saat game dibuka; scene lain yang mengganti.
+	play_music(menu_music)
 
 
 func play(event_name: String, _position: Vector2 = Vector2.ZERO, pitch: float = 1.0) -> void:
@@ -157,12 +192,38 @@ func stop_loop(event_name: String) -> void:
 		p.stop()
 
 
+# Suara interface: pool sendiri di bus UI, jadi tidak ikut diredam saat
+# SFX gameplay dipelankan (mis. demo di main menu).
+func play_ui(event_name: String) -> void:
+	var stream: AudioStream = streams.get(event_name)
+	if stream == null:
+		return
+	var now := Time.get_ticks_msec()
+	if now - int(_last_play_ms.get(event_name, -100000)) < int(GameBalance.audio_same_event_min_interval * 1000.0):
+		return
+	_last_play_ms[event_name] = now
+	var p := _ui_players[_next_ui_player]
+	_next_ui_player = (_next_ui_player + 1) % UI_POOL_SIZE
+	p.stream = stream
+	p.volume_db = linear_to_db(volumes.get(event_name, 1.0))
+	p.play()
+
+
+# Sambungkan suara standar ke sebuah tombol: hover saat disorot/di-focus,
+# dan bunyi tekan sesuai jenis aksinya ("confirm", "click", "back").
+func wire_button(button: BaseButton, kind: String = "click") -> void:
+	button.mouse_entered.connect(func() -> void: play_ui("ui_hover"))
+	button.focus_entered.connect(func() -> void: play_ui("ui_hover"))
+	button.pressed.connect(func() -> void: play_ui("ui_" + kind))
+
+
 # ------------------------------------------------------------ BUS VOLUME
 
 # sfx_offset_db: peredam tambahan sementara (dipakai demo di main menu).
 func apply_bus_volumes(sfx_offset_db: float = 0.0) -> void:
 	var music_idx := AudioServer.get_bus_index(MUSIC_BUS)
 	var sfx_idx := AudioServer.get_bus_index(SFX_BUS)
+	var ui_idx := AudioServer.get_bus_index(UI_BUS)
 	# Volume akhir = nilai dasar GameBalance + setelan player dari menu
 	# Options (0..1). Slider di 0 = bus dimatikan total.
 	if music_idx >= 0:
@@ -171,6 +232,10 @@ func apply_bus_volumes(sfx_offset_db: float = 0.0) -> void:
 	if sfx_idx >= 0:
 		AudioServer.set_bus_volume_db(sfx_idx,
 			GameBalance.sfx_volume_db + _slider_db(SaveData.sfx_volume) + sfx_offset_db)
+	# Bus UI ikut slider SFX, tapi TIDAK ikut peredaman sementara.
+	if ui_idx >= 0:
+		AudioServer.set_bus_volume_db(ui_idx,
+			GameBalance.sfx_volume_db + _slider_db(SaveData.sfx_volume))
 
 
 # 0..1 dari slider -> dB (0 = diam total).
@@ -183,6 +248,8 @@ func _slider_db(v: float) -> float:
 # Putar musik dengan fade-in. Kalau lagu yang sama sudah jalan, tidak
 # diulang dari awal (penting supaya pindah scene tidak me-restart musik).
 func play_music(stream: AudioStream = null, fade_time: float = -1.0) -> void:
+	# stream == null: pertahankan lagu yang sedang jalan (mis. scene tanpa
+	# lagu sendiri), jangan diam mendadak.
 	if stream != null:
 		music_stream = stream
 	if music_stream == null:

@@ -33,6 +33,13 @@ Semua efek suara dari [Kenney](https://www.kenney.nl) — lisensi CC0 1.0 Univer
 - [Interface Sounds](https://kenney.nl/assets/interface-sounds)
 - [Impact Sounds](https://kenney.nl/assets/impact-sounds)
 
+### Font
+- [Pixelify Sans](https://fonts.google.com/specimen/Pixelify+Sans) — SIL Open Font License 1.1
+
+### Musik
+- "Dark Web" oleh [The_Mountain](https://pixabay.com/id/users/the_mountain-3616498/) — Pixabay Content License  
+  https://pixabay.com/id/music/sekelilingnya-dark-web-144112/
+
 ### Art
 - Semua pixel art dibuat sendiri menggunakan Pixelorama.
 - [File aset asli (Google Drive)](https://drive.google.com/drive/u/0/folders/1AM9alzxJ667jqi_6_Wb6JbRyZiwGRMa-)

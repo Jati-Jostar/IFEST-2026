@@ -49,12 +49,28 @@ var _is_dead: bool = false
 
 var _shoot_locked: bool = false
 
+# --- Feedback menembak (muzzle flash + recoil) ---
+# Node kilatan dibuat lewat kode sebagai SAUDARA $Visual, bukan anaknya:
+# artist bebas mengganti isi $Visual tanpa menghapus efek ini, dan efeknya
+# tidak ikut berputar mengikuti rotasi badan kapal.
+var _muzzle_fx: Node2D
+var _muzzle_left: float = 0.0      # sisa waktu kilatan (detik)
+var _muzzle_dir: Vector2 = Vector2.UP
+var _recoil: float = 0.0           # seberapa jauh badan kapal masih mundur (px)
+var _recoil_dir: Vector2 = Vector2.UP
+var _visual_home: Vector2 = Vector2.ZERO
+
 
 func _ready() -> void:
 	add_to_group("player")
 	# Space yang dipakai untuk mulai dari menu mungkin masih tertahan —
 	# jangan sampai langsung membuang peluru. Tunggu dilepas dulu.
 	_shoot_locked = Input.is_action_pressed("shoot")
+	_visual_home = visual.position
+	_muzzle_fx = Node2D.new()
+	_muzzle_fx.z_index = 1   # di atas badan kapal
+	add_child(_muzzle_fx)
+	_muzzle_fx.draw.connect(_draw_muzzle)
 	hp = GameBalance.player_max_hp
 	ammo = GameBalance.player_max_ammo
 	# Kamera tidak boleh memperlihatkan area di luar arena.
@@ -62,6 +78,9 @@ func _ready() -> void:
 	camera.limit_top = 0
 	camera.limit_right = int(GameBalance.arena_width)
 	camera.limit_bottom = int(GameBalance.arena_height)
+	# Zoom sedikit keluar: arena jauh lebih besar dari layar, jadi makin
+	# luas pandangan makin adil (lihat juga penanda ancaman di HUD).
+	camera.zoom = Vector2.ONE * GameBalance.camera_zoom
 
 
 func _physics_process(delta: float) -> void:
@@ -77,6 +96,7 @@ func _physics_process(delta: float) -> void:
 	_handle_aim()
 	_handle_shooting(delta)
 	_handle_abilities()
+	_update_shoot_fx(delta)
 
 
 # ---------------- CHARGED LASER: charge dari skor ----------------
@@ -268,3 +288,41 @@ func _shoot() -> void:
 	ammo -= 1
 	ammo_changed.emit(ammo, GameBalance.player_max_ammo)
 	AudioManager.play("player_shoot", global_position)
+	_kick_shoot_fx(aim)
+
+
+# ---------------- FEEDBACK MENEMBAK (muzzle flash + recoil) ----------------
+
+# Dipanggil sekali tiap peluru keluar. Tidak ada node baru yang di-spawn,
+# jadi autofire tidak ikut memakan cap FX di Juice.
+func _kick_shoot_fx(aim: Vector2) -> void:
+	_muzzle_dir = aim
+	_recoil_dir = aim
+	_muzzle_left = GameBalance.muzzle_flash_time
+	_recoil = GameBalance.shoot_recoil_distance
+
+
+func _update_shoot_fx(delta: float) -> void:
+	if _muzzle_left > 0.0:
+		_muzzle_left = maxf(_muzzle_left - delta, 0.0)
+		_muzzle_fx.queue_redraw()
+	if _recoil > 0.0:
+		_recoil = maxf(_recoil - GameBalance.shoot_recoil_recover * delta, 0.0)
+		# Badan kapal mundur sedikit, lalu merayap kembali ke posisi semula.
+		# _visual_home dipakai supaya offset bawaan artist tidak ikut hilang.
+		visual.position = _visual_home - _recoil_dir * _recoil
+
+
+# Kilatan di ujung hidung kapal: bola terang + garis pendek ke arah tembak,
+# keduanya mengecil dan memudar bersamaan.
+func _draw_muzzle() -> void:
+	if _muzzle_left <= 0.0:
+		return
+	var k := _muzzle_left / maxf(GameBalance.muzzle_flash_time, 0.001)
+	var base := _muzzle_dir * MUZZLE_OFFSET
+	var c := GameBalance.muzzle_flash_color
+	var r := GameBalance.muzzle_flash_radius * k
+	_muzzle_fx.draw_circle(base, r * 1.9, Color(c.r, c.g, c.b, 0.25 * k))
+	_muzzle_fx.draw_circle(base, r, Color(c.r, c.g, c.b, 0.85 * k))
+	_muzzle_fx.draw_line(base, base + _muzzle_dir * GameBalance.muzzle_flash_length * k,
+		Color(1.0, 1.0, 1.0, 0.8 * k), maxf(r * 0.7, 1.0))

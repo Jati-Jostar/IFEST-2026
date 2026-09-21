@@ -65,10 +65,13 @@ func take_damage(amount: int, source: String = "bullet", _depth: int = 0) -> voi
 
 func die(killed_by: String = "bullet") -> void:
 	AudioManager.play("asteroid_break", global_position)
-	# Ditunda: dilarang menambah Area2D (fragment) di tengah physics
-	# callback ("flushing queries"). Deferred jalan setelah physics step,
-	# masih sebelum node ini benar-benar dihapus oleh queue_free.
-	call_deferred("_spawn_fragments")
+	# Pecahan dibuat SEKARANG, tapi dipasang ke scene secara deferred:
+	# menambah Area2D di tengah physics callback dilarang ("flushing
+	# queries"). Yang ditunda harus panggilan ke node INDUK, bukan ke
+	# asteroid ini — node yang sudah queue_free() membatalkan panggilan
+	# deferred miliknya sendiri, dan dulu itu membuat pecahan tidak
+	# pernah muncul sama sekali.
+	_spawn_fragments()
 	asteroid_destroyed.emit(global_position, killed_by)
 	queue_free()
 
@@ -78,7 +81,9 @@ func die(killed_by: String = "bullet") -> void:
 # unsur acak — supaya player bisa hafal polanya dan merencanakannya.
 # Semua pecahan berbagi kecepatan dan umur yang sama persis.
 func _spawn_fragments() -> void:
-	var parent := get_tree().current_scene
+	var parent := get_parent()
+	if parent == null:
+		parent = get_tree().current_scene
 	if parent == null:
 		return
 	var count: int = maxi(GameBalance.fragment_count, 1)
@@ -88,5 +93,5 @@ func _spawn_fragments() -> void:
 		var fragment := FRAGMENT_SCENE.instantiate()
 		fragment.position = global_position
 		fragment.velocity = Vector2.RIGHT.rotated(angle) * GameBalance.fragment_speed
-		parent.add_child(fragment)
-		fragment.reset_physics_interpolation()
+		parent.call_deferred("add_child", fragment)
+		fragment.call_deferred("reset_physics_interpolation")

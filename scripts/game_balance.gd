@@ -77,9 +77,16 @@ var cluster_spacing_ramp: float = 60.0      # detik bertahan untuk mencapai spac
 var score_ramp_full: float = 12000.0        # skor juga mempercepat ramp (main bagus = tekanan naik)
 var heavy_start_time: float = 12.0          # Heavy baru ikut cluster setelah detik ini
 var asteroid_start_time: float = 6.0        # asteroid baru muncul setelah detik ini
-var max_swarms_on_screen: int = 80          # batas SWARM hidup. Terpisah dari kuota Heavy
-											# & asteroid — kuota mereka penuh tidak boleh
-											# memperlambat spawn swarm sedikit pun.
+# Batas SWARM hidup NAIK BERTAHAP, tidak langsung di angka maksimal.
+# Terpisah dari kuota Heavy & asteroid — kuota mereka penuh tidak boleh
+# memperlambat spawn swarm sedikit pun.
+# Awal 80: chain masih terbaca & performa aman saat pemain belajar.
+# Akhir 400: arena benar-benar penuh, chain melompat ke mana-mana.
+# Patokannya SKOR saja, bukan waktu bertahan: kepadatan naik karena
+# pemain bermain bagus, bukan karena sekadar bertahan lama.
+var max_swarms_start: int = 80               # batas saat skor 0
+var max_swarms_end: int = 400                # batas tertinggi (mentok di sini)
+var max_swarms_ramp_score: float = 5000000.0 # skor untuk mencapai batas penuh
 
 # ============ GAME OVER ============
 var game_over_slowmo_scale: float = 0.25     # slow-motion saat player mati
@@ -106,6 +113,10 @@ var fragment_start_angle_deg: float = 0.0  # sudut pecahan pertama (0 = ke kanan
 var fragment_speed: float = 320.0        # jangkauan = speed x lifetime ≈ 448 px,
 var fragment_lifetime: float = 4       # cukup menjangkau cluster tetangga (spacing awal 400)
 var fragment_damage: int = 12            # membunuh swarm sehat (HP 10) sekali kena
+var fragment_arm_time: float = 0.5       # pecahan belum bisa mengenai apa pun selama ini.
+										 # Tanpa jeda ini, asteroid yang hancur di tengah
+										 # kerumunan langsung "memakan" pecahannya sendiri
+										 # di frame pertama dan pecahan tidak terlihat.
 
 # ============ ABILITY PICKUP ============
 # LANGKA — inilah yang menyeimbangkan Nuke yang menghapus total.
@@ -114,11 +125,16 @@ var fragment_damage: int = 12            # membunuh swarm sehat (HP 10) sekali k
 var ability_spawn_interval_min: float = 25.0  # jeda spawn pickup ability (acak min..max)
 var ability_spawn_interval_max: float = 40.0
 var ability_max_on_field: int = 1             # hanya 1 pickup ability belum diambil sekaligus
+# Pickup pertama sengaja cepat & dipastikan NUKE: saat demo/penilaian,
+# skill langsung bisa ditunjukkan tanpa menunggu lama.
+var ability_first_spawn_delay: float = 10.0
+var ability_first_is_nuke: bool = true
 
 # ============ AMMO PICKUP (kotak abu-abu) ============
 # JAUH lebih sering daripada pickup ability: ini ritme normal permainan.
 # Player boleh sengaja menunda mengambilnya karena sedang menyiapkan chain.
-var ammo_spawn_interval: float = 6.0     # jeda spawn pickup amunisi (detik)
+var ammo_spawn_interval: float = 12.0    # jeda spawn pickup amunisi (detik). Dari 6 -> 12:
+										 # amunisi 2x lebih langka supaya tidak bisa spam tembak
 var ammo_max_on_field: int = 4           # pickup amunisi belum diambil, maksimal sekaligus
 var ammo_restore_amount: int = 8         # isi ulang penuh (= player_max_ammo)
 var pickup_edge_margin: float = 120.0    # jarak minimal pickup dari tepi arena
@@ -214,11 +230,20 @@ var shake_player_hit_duration: float = 0.15
 var shake_asteroid_intensity: float = 5.0  # shake saat asteroid pecah
 var shake_asteroid_duration: float = 0.2
 
+# --- Feedback saat MENEMBAK (aksi paling sering dilakukan pemain) ---
+# Sengaja tanpa screen shake: fire rate tinggi, shake per peluru bikin pusing.
+var muzzle_flash_time: float = 0.09       # lama kilatan di moncong (detik)
+var muzzle_flash_radius: float = 7.0      # besar bola kilatan
+var muzzle_flash_length: float = 22.0     # panjang garis kilatan ke arah tembak
+var muzzle_flash_color: Color = Color(1.0, 0.95, 0.72)
+var shoot_recoil_distance: float = 3.5    # mundurnya badan kapal saat menembak (px)
+var shoot_recoil_recover: float = 38.0    # kecepatan kembali ke posisi semula (px/detik)
+
 # ============ AUDIO (volume bus) ============
 # Musik & SFX punya bus terpisah (lihat panel Audio di bawah editor).
 # Musik HARUS jauh lebih pelan dari SFX — ledakan chain adalah bintangnya,
 # musik hanya suasana. 0 dB = volume asli, -6 dB ≈ setengah terasa.
-var music_volume_db: float = -14.0
+var music_volume_db: float = -16.5   # = 75% dari -14 dB (linear_to_db(0.75) = -2.5)
 var sfx_volume_db: float = 0.0
 var music_fade_in_time: float = 1.5      # detik musik naik perlahan saat mulai
 var music_fade_out_time: float = 1.0     # detik musik turun saat stop_music()
@@ -350,3 +375,22 @@ var heal_max_on_field: int = 1
 # ledakan beruntun terbaca sebagai damage yang MENUMPUK.
 var healthbar_chip_delay: float = 0.25
 var healthbar_chip_time: float = 0.3
+
+# ============ KECEPATAN GAME (chaos ramp) ============
+# Tiap kelipatan skor ini, SELURUH game berjalan lebih cepat (Engine
+# time scale): musuh, spawn, peluru, animasi — semuanya. Makin jauh
+# bertahan = makin kacau.
+var game_speed_score_step: int = 2000000
+var game_speed_increment: float = 0.25   # +25% tiap tangga
+var game_speed_max: float = 2.0          # mentok 2x kecepatan normal
+
+# ============ KAMERA & PENANDA ANCAMAN ============
+# Arena (1600x1200) lebih besar dari layar (960x720), jadi ada musuh yang
+# datang dari luar pandangan. Dua penangkalnya:
+#   1) kamera sedikit di-zoom out  2) panah kecil di tepi layar
+var camera_zoom: float = 0.9              # < 1 = lihat lebih luas (0.9 -> 1067x800)
+var threat_indicator_margin: float = 26.0 # jarak panah dari tepi layar
+var threat_indicator_margin_top: float = 62.0 # lebih longgar di atas: ada SCORE & CHAIN di sana
+var threat_indicator_size: float = 13.0   # besar panah
+var threat_indicator_update_frames: int = 3  # hitung ulang tiap N frame (hemat CPU)
+var threat_indicator_min_distance: float = 60.0 # abaikan target yang nyaris di layar

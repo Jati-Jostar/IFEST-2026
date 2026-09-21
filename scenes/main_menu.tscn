@@ -1,18 +1,19 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://oasurfbipebh"]
 
-[ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_menu"]
-[ext_resource type="PackedScene" path="res://scenes/main.tscn" id="2_demo"]
+[ext_resource type="Script" uid="uid://cncrdv3b0q7wa" path="res://scripts/main_menu.gd" id="1_menu"]
+[ext_resource type="PackedScene" uid="uid://4r48nrwckjic" path="res://scenes/main.tscn" id="2_demo"]
+[ext_resource type="Texture2D" uid="uid://cdmqunos6h3hu" path="res://assets/sprites/Title-game.png" id="3_bqqt6"]
 
-[node name="MainMenu" type="Node"]
+[node name="MainMenu" type="Node" unique_id=1824440325]
 script = ExtResource("1_menu")
 
-[node name="Demo" parent="." instance=ExtResource("2_demo")]
+[node name="Demo" parent="." unique_id=762706106 instance=ExtResource("2_demo")]
 demo_mode = true
 
-[node name="MenuUI" type="CanvasLayer" parent="."]
+[node name="MenuUI" type="CanvasLayer" parent="." unique_id=238553611]
 layer = 10
 
-[node name="Background" type="ColorRect" parent="MenuUI"]
+[node name="Background" type="ColorRect" parent="MenuUI" unique_id=86446371]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -21,7 +22,7 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.055, 0.051, 0.122, 1)
 
-[node name="Center" type="CenterContainer" parent="MenuUI"]
+[node name="Center" type="CenterContainer" parent="MenuUI" unique_id=448342047]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -29,115 +30,153 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="VBox" type="VBoxContainer" parent="MenuUI/Center"]
+[node name="VBox" type="VBoxContainer" parent="MenuUI/Center" unique_id=1119972196]
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Title" type="Label" parent="MenuUI/Center/VBox"]
+[node name="Title" type="CenterContainer" parent="MenuUI/Center/VBox" unique_id=263641303]
+custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
-theme_type_variation = &"TitleLabel"
-theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
-text = "SUPERNOVA"
-horizontal_alignment = 1
 
-[node name="Tagline" type="Label" parent="MenuUI/Center/VBox"]
-layout_mode = 2
-theme_type_variation = &"BodyLabel"
-theme_override_colors/font_color = Color(0.486, 0.486, 0.69, 1)
-text = "Ledakan terbesar adalah yang kamu susun sendiri"
-horizontal_alignment = 1
+[node name="Placeholder" type="Sprite2D" parent="MenuUI/Center/VBox/Title" unique_id=1475639652]
+position = Vector2(280, 234)
+texture = ExtResource("3_bqqt6")
 
-[node name="SpacerTop" type="Control" parent="MenuUI/Center/VBox"]
-custom_minimum_size = Vector2(0, 44)
+[node name="TaglineGap" type="Control" parent="MenuUI/Center/VBox" unique_id=641369280]
+custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="FirstTimeBlock" type="HBoxContainer" parent="MenuUI/Center/VBox"]
+[node name="Tagline" type="Label" parent="MenuUI/Center/VBox" unique_id=641369286]
+layout_mode = 2
+theme_type_variation = &"HudLabel"
+theme_override_colors/font_color = Color(0.78, 0.78, 0.95, 1)
+text = "The biggest blast is the one you set up yourself"
+horizontal_alignment = 1
+
+[node name="SpacerTop" type="Control" parent="MenuUI/Center/VBox" unique_id=2105207885]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="FirstTimeBlock" type="HBoxContainer" parent="MenuUI/Center/VBox" unique_id=598820691]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 56
 alignment = 1
 
-[node name="Step1" type="VBoxContainer" parent="MenuUI/Center/VBox/FirstTimeBlock"]
+[node name="Step1" type="VBoxContainer" parent="MenuUI/Center/VBox/FirstTimeBlock" unique_id=213199018]
 layout_mode = 2
 
-[node name="Head" type="HBoxContainer" parent="MenuUI/Center/VBox/FirstTimeBlock/Step1"]
+[node name="Head" type="HBoxContainer" parent="MenuUI/Center/VBox/FirstTimeBlock/Step1" unique_id=275030955]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Num" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step1/Head"]
+[node name="Num" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step1/Head" unique_id=453236272]
 layout_mode = 2
 theme_type_variation = &"HudLabel"
 theme_override_colors/font_color = Color(0.937, 0.624, 0.153, 1)
 text = "1"
 
-[node name="Name" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step1/Head"]
+[node name="Name" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step1/Head" unique_id=2036957908]
 layout_mode = 2
 theme_type_variation = &"HudLabel"
 theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
-text = "TEMBAK"
+text = "SHOOT"
 
-[node name="Desc" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step1"]
+[node name="Desc" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step1" unique_id=1905742545]
 layout_mode = 2
 theme_type_variation = &"SmallLabel"
-theme_override_colors/font_color = Color(0.486, 0.486, 0.69, 1)
-text = "peluru cepat
-habis"
+theme_override_colors/font_color = Color(0.68, 0.68, 0.87, 1)
+text = "ammo runs out
+fast"
 
-[node name="Step2" type="VBoxContainer" parent="MenuUI/Center/VBox/FirstTimeBlock"]
+[node name="Step2" type="VBoxContainer" parent="MenuUI/Center/VBox/FirstTimeBlock" unique_id=233193070]
 layout_mode = 2
 
-[node name="Head" type="HBoxContainer" parent="MenuUI/Center/VBox/FirstTimeBlock/Step2"]
+[node name="Head" type="HBoxContainer" parent="MenuUI/Center/VBox/FirstTimeBlock/Step2" unique_id=1949486872]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Num" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step2/Head"]
+[node name="Num" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step2/Head" unique_id=2182040]
 layout_mode = 2
 theme_type_variation = &"HudLabel"
 theme_override_colors/font_color = Color(0.937, 0.624, 0.153, 1)
 text = "2"
 
-[node name="Name" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step2/Head"]
+[node name="Name" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step2/Head" unique_id=471421525]
 layout_mode = 2
 theme_type_variation = &"HudLabel"
 theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
-text = "GIRING"
+text = "GATHER"
 
-[node name="Desc" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step2"]
+[node name="Desc" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step2" unique_id=5860276]
 layout_mode = 2
 theme_type_variation = &"SmallLabel"
-theme_override_colors/font_color = Color(0.486, 0.486, 0.69, 1)
-text = "kumpulkan jadi
-rapat"
+theme_override_colors/font_color = Color(0.68, 0.68, 0.87, 1)
+text = "pack them
+together"
 
-[node name="Step3" type="VBoxContainer" parent="MenuUI/Center/VBox/FirstTimeBlock"]
+[node name="Step3" type="VBoxContainer" parent="MenuUI/Center/VBox/FirstTimeBlock" unique_id=2004577423]
 layout_mode = 2
 
-[node name="Head" type="HBoxContainer" parent="MenuUI/Center/VBox/FirstTimeBlock/Step3"]
+[node name="Head" type="HBoxContainer" parent="MenuUI/Center/VBox/FirstTimeBlock/Step3" unique_id=1433285329]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Num" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step3/Head"]
+[node name="Num" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step3/Head" unique_id=1040126739]
 layout_mode = 2
 theme_type_variation = &"HudLabel"
 theme_override_colors/font_color = Color(0.937, 0.624, 0.153, 1)
 text = "3"
 
-[node name="Name" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step3/Head"]
+[node name="Name" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step3/Head" unique_id=1936962877]
 layout_mode = 2
 theme_type_variation = &"HudLabel"
 theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
-text = "LEDAKKAN"
+text = "DETONATE"
 
-[node name="Desc" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step3"]
+[node name="Desc" type="Label" parent="MenuUI/Center/VBox/FirstTimeBlock/Step3" unique_id=929026249]
 layout_mode = 2
 theme_type_variation = &"SmallLabel"
-theme_override_colors/font_color = Color(0.486, 0.486, 0.69, 1)
-text = "rantai sepanjang
-mungkin"
+theme_override_colors/font_color = Color(0.68, 0.68, 0.87, 1)
+text = "chain as long
+as you can"
 
-[node name="RecordsBlock" type="HBoxContainer" parent="MenuUI"]
+[node name="SpacerMid" type="Control" parent="MenuUI/Center/VBox" unique_id=2117157460]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="MainButtons" type="VBoxContainer" parent="MenuUI/Center/VBox" unique_id=501699820]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="StartButton" type="Button" parent="MenuUI/Center/VBox/MainButtons" unique_id=793742823]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "START"
+
+[node name="OptionsButton" type="Button" parent="MenuUI/Center/VBox/MainButtons" unique_id=676552811]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "OPTIONS"
+
+[node name="Controls" type="Label" parent="MenuUI/Center/VBox" unique_id=2015852092]
+layout_mode = 2
+theme_type_variation = &"SmallLabel"
+theme_override_colors/font_color = Color(0.56, 0.55, 0.72, 1)
+text = "WASD move · CLICK shoot · Q singularity · E nuke · F laser · ESC pause"
+horizontal_alignment = 1
+
+[node name="RecordsBlock" type="HBoxContainer" parent="MenuUI" unique_id=654055863]
 unique_name_in_owner = true
 visible = false
 anchors_preset = 1
@@ -151,75 +190,43 @@ grow_horizontal = 0
 theme_override_constants/separation = 32
 alignment = 2
 
-[node name="HighScore" type="VBoxContainer" parent="MenuUI/RecordsBlock"]
+[node name="HighScore" type="VBoxContainer" parent="MenuUI/RecordsBlock" unique_id=903159136]
 layout_mode = 2
 
-[node name="Caption" type="Label" parent="MenuUI/RecordsBlock/HighScore"]
+[node name="Caption" type="Label" parent="MenuUI/RecordsBlock/HighScore" unique_id=1442088118]
 layout_mode = 2
-horizontal_alignment = 2
 theme_type_variation = &"SmallLabel"
-theme_override_colors/font_color = Color(0.486, 0.486, 0.69, 1)
-text = "SKOR TERTINGGI"
+theme_override_colors/font_color = Color(0.68, 0.68, 0.87, 1)
+text = "HIGH SCORE"
+horizontal_alignment = 2
 
-[node name="HighScoreValue" type="Label" parent="MenuUI/RecordsBlock/HighScore"]
+[node name="HighScoreValue" type="Label" parent="MenuUI/RecordsBlock/HighScore" unique_id=712859022]
 unique_name_in_owner = true
 layout_mode = 2
-horizontal_alignment = 2
 theme_type_variation = &"HudLabel"
 theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
 text = "0"
-
-[node name="BestChain" type="VBoxContainer" parent="MenuUI/RecordsBlock"]
-layout_mode = 2
-
-[node name="Caption" type="Label" parent="MenuUI/RecordsBlock/BestChain"]
-layout_mode = 2
 horizontal_alignment = 2
-theme_type_variation = &"SmallLabel"
-theme_override_colors/font_color = Color(0.486, 0.486, 0.69, 1)
-text = "CHAIN TERBAIK"
 
-[node name="BestChainValue" type="Label" parent="MenuUI/RecordsBlock/BestChain"]
+[node name="BestChain" type="VBoxContainer" parent="MenuUI/RecordsBlock" unique_id=100476108]
+layout_mode = 2
+
+[node name="Caption" type="Label" parent="MenuUI/RecordsBlock/BestChain" unique_id=686711348]
+layout_mode = 2
+theme_type_variation = &"SmallLabel"
+theme_override_colors/font_color = Color(0.68, 0.68, 0.87, 1)
+text = "BEST CHAIN"
+horizontal_alignment = 2
+
+[node name="BestChainValue" type="Label" parent="MenuUI/RecordsBlock/BestChain" unique_id=1149909705]
 unique_name_in_owner = true
 layout_mode = 2
-horizontal_alignment = 2
 theme_type_variation = &"HudLabel"
 theme_override_colors/font_color = Color(0.937, 0.624, 0.153, 1)
 text = "x0"
+horizontal_alignment = 2
 
-[node name="SpacerMid" type="Control" parent="MenuUI/Center/VBox"]
-custom_minimum_size = Vector2(0, 52)
-layout_mode = 2
-mouse_filter = 2
-
-[node name="MainButtons" type="VBoxContainer" parent="MenuUI/Center/VBox"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 14
-alignment = 1
-
-[node name="StartButton" type="Button" parent="MenuUI/Center/VBox/MainButtons"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(260, 0)
-layout_mode = 2
-size_flags_horizontal = 4
-text = "MULAI"
-
-[node name="OptionsButton" type="Button" parent="MenuUI/Center/VBox/MainButtons"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(260, 0)
-layout_mode = 2
-size_flags_horizontal = 4
-text = "OPTIONS"
-
-[node name="Controls" type="Label" parent="MenuUI/Center/VBox"]
-layout_mode = 2
-theme_type_variation = &"SmallLabel"
-theme_override_colors/font_color = Color(0.29, 0.282, 0.388, 1)
-text = "WASD gerak · KLIK tembak · Q singularity · E nuke · F laser · ESC jeda"
-horizontal_alignment = 1
-
-[node name="CreditLeft" type="Label" parent="MenuUI"]
+[node name="CreditLeft" type="Label" parent="MenuUI" unique_id=100023646]
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
@@ -229,78 +236,98 @@ offset_right = 360.0
 offset_bottom = -14.0
 grow_vertical = 0
 theme_type_variation = &"SmallLabel"
-theme_override_colors/font_color = Color(0.29, 0.282, 0.388, 1)
+theme_override_colors/font_color = Color(0.56, 0.55, 0.72, 1)
 text = "Fida & Elsa · IFEST 2026"
 
-[node name="CreditRight" type="Label" parent="MenuUI"]
+[node name="CreditRight" type="VBoxContainer" parent="MenuUI" unique_id=1700495341]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -360.0
-offset_top = -36.0
+offset_left = -580.0
+offset_top = -74.0
 offset_right = -20.0
 offset_bottom = -14.0
 grow_horizontal = 0
 grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Sfx" type="Label" parent="MenuUI/CreditRight" unique_id=1437895849]
+layout_mode = 2
 theme_type_variation = &"SmallLabel"
-theme_override_colors/font_color = Color(0.29, 0.282, 0.388, 1)
-text = "SFX: Kenney.nl"
+theme_override_colors/font_color = Color(0.56, 0.55, 0.72, 1)
+text = "SFX: Kenney.nl (CC0)"
 horizontal_alignment = 2
 
-[node name="OptionsPanel" type="Control" parent="MenuUI"]
+[node name="Music" type="Label" parent="MenuUI/CreditRight" unique_id=989521700]
+layout_mode = 2
+theme_type_variation = &"SmallLabel"
+theme_override_colors/font_color = Color(0.56, 0.55, 0.72, 1)
+text = "Music: \"Dark Web\" by The_Mountain — Pixabay"
+horizontal_alignment = 2
+
+[node name="Font" type="Label" parent="MenuUI/CreditRight" unique_id=322074258]
+layout_mode = 2
+theme_type_variation = &"SmallLabel"
+theme_override_colors/font_color = Color(0.56, 0.55, 0.72, 1)
+text = "Font: Pixelify Sans — SIL OFL 1.1"
+horizontal_alignment = 2
+
+[node name="OptionsPanel" type="Control" parent="MenuUI" unique_id=494865592]
 unique_name_in_owner = true
 visible = false
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Dim" type="ColorRect" parent="MenuUI/OptionsPanel"]
-anchors_preset = 15
+[node name="Dim" type="ColorRect" parent="MenuUI/OptionsPanel" unique_id=49734319]
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.055, 0.051, 0.122, 0.97)
 
-[node name="Center" type="CenterContainer" parent="MenuUI/OptionsPanel"]
-anchors_preset = 15
+[node name="Center" type="CenterContainer" parent="MenuUI/OptionsPanel" unique_id=1326426584]
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="MenuUI/OptionsPanel/Center"]
+[node name="VBox" type="VBoxContainer" parent="MenuUI/OptionsPanel/Center" unique_id=1006989063]
 layout_mode = 2
 theme_override_constants/separation = 12
 alignment = 1
 
-[node name="Title" type="Label" parent="MenuUI/OptionsPanel/Center/VBox"]
+[node name="Title" type="Label" parent="MenuUI/OptionsPanel/Center/VBox" unique_id=224780659]
 layout_mode = 2
 theme_type_variation = &"TitleLabel"
 theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
 text = "OPTIONS"
 horizontal_alignment = 1
 
-[node name="Spacer" type="Control" parent="MenuUI/OptionsPanel/Center/VBox"]
+[node name="Spacer" type="Control" parent="MenuUI/OptionsPanel/Center/VBox" unique_id=1479408846]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 
-[node name="MusicRow" type="HBoxContainer" parent="MenuUI/OptionsPanel/Center/VBox"]
+[node name="MusicRow" type="HBoxContainer" parent="MenuUI/OptionsPanel/Center/VBox" unique_id=1621954508]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="Label" type="Label" parent="MenuUI/OptionsPanel/Center/VBox/MusicRow"]
+[node name="Label" type="Label" parent="MenuUI/OptionsPanel/Center/VBox/MusicRow" unique_id=1268900995]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 theme_type_variation = &"BodyLabel"
-theme_override_colors/font_color = Color(0.486, 0.486, 0.69, 1)
-text = "MUSIK"
+theme_override_colors/font_color = Color(0.68, 0.68, 0.87, 1)
+text = "MUSIC"
 
-[node name="MusicSlider" type="HSlider" parent="MenuUI/OptionsPanel/Center/VBox/MusicRow"]
+[node name="MusicSlider" type="HSlider" parent="MenuUI/OptionsPanel/Center/VBox/MusicRow" unique_id=401915187]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(300, 24)
 layout_mode = 2
@@ -308,7 +335,7 @@ max_value = 1.0
 step = 0.05
 value = 1.0
 
-[node name="MusicValue" type="Label" parent="MenuUI/OptionsPanel/Center/VBox/MusicRow"]
+[node name="MusicValue" type="Label" parent="MenuUI/OptionsPanel/Center/VBox/MusicRow" unique_id=2008788644]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
@@ -317,18 +344,18 @@ theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
 text = "100%"
 horizontal_alignment = 2
 
-[node name="SfxRow" type="HBoxContainer" parent="MenuUI/OptionsPanel/Center/VBox"]
+[node name="SfxRow" type="HBoxContainer" parent="MenuUI/OptionsPanel/Center/VBox" unique_id=794774617]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="Label" type="Label" parent="MenuUI/OptionsPanel/Center/VBox/SfxRow"]
+[node name="Label" type="Label" parent="MenuUI/OptionsPanel/Center/VBox/SfxRow" unique_id=886036026]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 theme_type_variation = &"BodyLabel"
-theme_override_colors/font_color = Color(0.486, 0.486, 0.69, 1)
-text = "EFEK SUARA"
+theme_override_colors/font_color = Color(0.68, 0.68, 0.87, 1)
+text = "SOUND EFFECTS"
 
-[node name="SfxSlider" type="HSlider" parent="MenuUI/OptionsPanel/Center/VBox/SfxRow"]
+[node name="SfxSlider" type="HSlider" parent="MenuUI/OptionsPanel/Center/VBox/SfxRow" unique_id=1935810999]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(300, 24)
 layout_mode = 2
@@ -336,7 +363,7 @@ max_value = 1.0
 step = 0.05
 value = 1.0
 
-[node name="SfxValue" type="Label" parent="MenuUI/OptionsPanel/Center/VBox/SfxRow"]
+[node name="SfxValue" type="Label" parent="MenuUI/OptionsPanel/Center/VBox/SfxRow" unique_id=354206501]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(70, 0)
 layout_mode = 2
@@ -345,21 +372,25 @@ theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
 text = "100%"
 horizontal_alignment = 2
 
-[node name="Spacer2" type="Control" parent="MenuUI/OptionsPanel/Center/VBox"]
+[node name="Spacer2" type="Control" parent="MenuUI/OptionsPanel/Center/VBox" unique_id=1298729059]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 
-[node name="BackButton" type="Button" parent="MenuUI/OptionsPanel/Center/VBox"]
+[node name="BackButton" type="Button" parent="MenuUI/OptionsPanel/Center/VBox" unique_id=879518380]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(260, 0)
 layout_mode = 2
 size_flags_horizontal = 4
-text = "KEMBALI"
+text = "BACK"
 
-[node name="Fader" type="ColorRect" parent="MenuUI"]
+[node name="Fader" type="ColorRect" parent="MenuUI" unique_id=1335988841]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -5.0
+offset_top = 22.0
+offset_right = -5.0
+offset_bottom = 22.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2

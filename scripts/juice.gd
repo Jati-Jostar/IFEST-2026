@@ -60,6 +60,14 @@ func shake(intensity: float, duration: float) -> void:
 	_shake_decay = maxf(_shake_decay, intensity / maxf(duration, 0.05))
 
 
+# Ubah kecepatan dasar permainan (dipakai ramp chaos di main.gd).
+# Kalau sedang hitstop, nilainya baru dipakai saat hitstop selesai.
+func set_base_time_scale(value: float) -> void:
+	base_time_scale = value
+	if not _hitstop_active:
+		Engine.time_scale = value
+
+
 # ---------------- HITSTOP (tidak pernah menumpuk — ambil yang terpanjang) ----------------
 
 func hitstop(duration: float) -> void:
@@ -100,13 +108,16 @@ func punch_scale(node: CanvasItem, amount: float, duration: float) -> void:
 
 # ---------------- CAMERA ZOOM PUNCH ----------------
 
+# amount = PENGALI dari zoom dasar (GameBalance.camera_zoom), bukan nilai
+# mutlak. Kalau dipakai nilai mutlak, zoom dasar hilang setelah efek ini.
 func punch_zoom(amount: float, duration: float) -> void:
 	var cam := get_viewport().get_camera_2d()
 	if cam == null:
 		return
-	cam.zoom = Vector2.ONE * amount
+	var base := GameBalance.camera_zoom
+	cam.zoom = Vector2.ONE * base * amount
 	var tw := cam.create_tween()
-	tw.tween_property(cam, "zoom", Vector2.ONE, duration)
+	tw.tween_property(cam, "zoom", Vector2.ONE * base, duration)
 
 
 # ---------------- FULL-SCREEN FLASH ----------------

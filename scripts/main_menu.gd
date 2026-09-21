@@ -37,7 +37,7 @@ func _ready() -> void:
 
 	# Musik sudah jalan dari AudioManager; panggilan ini tidak me-restart
 	# lagu yang sama, hanya memastikan volumenya naik kalau sempat di-fade.
-	AudioManager.play_music()
+	AudioManager.play_music(AudioManager.menu_music)
 
 	# Demo gameplay di belakang: diredupkan oleh Background (warna menu
 	# semi-transparan) dan SFX-nya dipelankan.
@@ -54,6 +54,10 @@ func _ready() -> void:
 	start_button.pressed.connect(_on_start)
 	options_button.pressed.connect(_show_options.bind(true))
 	back_button.pressed.connect(_show_options.bind(false))
+	# Suara interface (hover + tekan).
+	AudioManager.wire_button(start_button, "confirm")
+	AudioManager.wire_button(options_button, "click")
+	AudioManager.wire_button(back_button, "back")
 	music_slider.value_changed.connect(_on_volume_changed)
 	sfx_slider.value_changed.connect(_on_volume_changed)
 	music_slider.value = SaveData.music_volume
@@ -81,6 +85,8 @@ func _on_start() -> void:
 
 
 func _show_options(show_it: bool) -> void:
+	if show_it != options_panel.visible:
+		AudioManager.play_ui("ui_open" if show_it else "ui_close")
 	options_panel.visible = show_it
 	main_buttons.visible = not show_it
 	if show_it:
@@ -92,6 +98,7 @@ func _show_options(show_it: bool) -> void:
 # Slider digeser: langsung terdengar, langsung tersimpan.
 func _on_volume_changed(_value: float) -> void:
 	SaveData.set_volumes(music_slider.value, sfx_slider.value)
+	AudioManager.play_ui("ui_tick")
 	# Selama di menu, SFX tetap dipelankan untuk demo latar.
 	AudioManager.apply_bus_volumes(GameBalance.menu_demo_sfx_volume_db)
 	_update_volume_labels()

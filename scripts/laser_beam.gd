@@ -170,7 +170,10 @@ func _zoom_camera(target: float) -> void:
 		_cam_tween.kill()
 	# Tween dibuat di kamera supaya tetap selesai walau node ini sudah dihapus.
 	_cam_tween = cam.create_tween()
-	_cam_tween.tween_property(cam, "zoom", Vector2.ONE * target, GameBalance.laser_zoom_time) \
+	# target = PENGALI dari zoom dasar kamera, bukan nilai mutlak — kalau
+	# mutlak, zoom dasar (camera_zoom) hilang setelah beam selesai.
+	_cam_tween.tween_property(cam, "zoom",
+		Vector2.ONE * GameBalance.camera_zoom * target, GameBalance.laser_zoom_time) \
 		.set_trans(Tween.TRANS_SINE)
 
 

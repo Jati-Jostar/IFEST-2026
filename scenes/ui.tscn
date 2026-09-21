@@ -1,9 +1,16 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/ui.gd" id="1_ui"]
+[ext_resource type="Script" path="res://scripts/threat_indicators.gd" id="2_threat"]
 
 [node name="UI" type="CanvasLayer"]
 script = ExtResource("1_ui")
+
+[node name="ThreatIndicators" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("2_threat")
 
 [node name="HPLabel" type="Label" parent="."]
 offset_left = 16.0
@@ -31,6 +38,19 @@ offset_bottom = 40.0
 theme_type_variation = &"HudLabel"
 text = "SCORE: 000000"
 horizontal_alignment = 1
+
+[node name="SpeedLabel" type="Label" parent="."]
+visible = false
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -400.0
+offset_top = 10.0
+offset_right = -16.0
+offset_bottom = 40.0
+theme_type_variation = &"HudLabel"
+theme_override_colors/font_color = Color(1, 0.55, 0.2, 1)
+text = "SPEED x1.25"
+horizontal_alignment = 2
 
 [node name="ChainLabel" type="Label" parent="."]
 visible = false
@@ -114,7 +134,7 @@ offset_right = 500.0
 offset_bottom = -14.0
 theme_type_variation = &"SmallLabel"
 theme_override_colors/font_color = Color(0.6, 0.6, 0.7, 1)
-text = "WASD gerak | Mouse/Space tembak | Q Singularity | E Nuke | F Laser | ESC jeda"
+text = "WASD move | Mouse/Space shoot | Q Singularity | E Nuke | F Laser | ESC pause"
 
 [node name="GameOverPanel" type="Control" parent="."]
 process_mode = 3
@@ -151,7 +171,7 @@ mouse_filter = 2
 [node name="ChainCaption" type="Label" parent="GameOverPanel/Center/VBox"]
 theme_type_variation = &"SmallLabel"
 theme_override_colors/font_color = Color(0.486, 0.486, 0.69, 1)
-text = "CHAIN TERBAIK"
+text = "BEST CHAIN"
 horizontal_alignment = 1
 
 [node name="BestChain" type="Label" parent="GameOverPanel/Center/VBox"]
@@ -164,7 +184,7 @@ horizontal_alignment = 1
 visible = false
 theme_type_variation = &"BodyLabel"
 theme_override_colors/font_color = Color(0.937, 0.624, 0.153, 1)
-text = "REKOR BARU!"
+text = "NEW RECORD!"
 horizontal_alignment = 1
 
 [node name="SpacerMid" type="Control" parent="GameOverPanel/Center/VBox"]
@@ -174,14 +194,14 @@ mouse_filter = 2
 [node name="FinalScore" type="Label" parent="GameOverPanel/Center/VBox"]
 theme_type_variation = &"HudLabel"
 theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
-text = "SKOR 0"
+text = "SCORE 0"
 horizontal_alignment = 1
 
 [node name="ScoreRecord" type="Label" parent="GameOverPanel/Center/VBox"]
 visible = false
 theme_type_variation = &"BodyLabel"
 theme_override_colors/font_color = Color(0.937, 0.624, 0.153, 1)
-text = "REKOR BARU!"
+text = "NEW RECORD!"
 horizontal_alignment = 1
 
 [node name="SpacerBottom" type="Control" parent="GameOverPanel/Center/VBox"]
@@ -194,11 +214,11 @@ alignment = 1
 
 [node name="RetryButton" type="Button" parent="GameOverPanel/Center/VBox/Buttons"]
 custom_minimum_size = Vector2(220, 0)
-text = "MAIN LAGI"
+text = "RETRY"
 
 [node name="MenuButton" type="Button" parent="GameOverPanel/Center/VBox/Buttons"]
 custom_minimum_size = Vector2(220, 0)
-text = "MENU UTAMA"
+text = "MAIN MENU"
 
 [node name="PauseMenu" type="Control" parent="."]
 process_mode = 3
@@ -222,7 +242,7 @@ alignment = 1
 [node name="Title" type="Label" parent="PauseMenu/Center/VBox"]
 theme_type_variation = &"TitleLabel"
 theme_override_colors/font_color = Color(0.91, 0.925, 1, 1)
-text = "JEDA"
+text = "PAUSED"
 horizontal_alignment = 1
 
 [node name="Spacer" type="Control" parent="PauseMenu/Center/VBox"]
@@ -231,22 +251,22 @@ custom_minimum_size = Vector2(0, 30)
 [node name="ResumeButton" type="Button" parent="PauseMenu/Center/VBox"]
 custom_minimum_size = Vector2(280, 0)
 size_flags_horizontal = 4
-text = "LANJUTKAN"
+text = "RESUME"
 
 [node name="RestartButton" type="Button" parent="PauseMenu/Center/VBox"]
 custom_minimum_size = Vector2(280, 0)
 size_flags_horizontal = 4
-text = "ULANGI"
+text = "RESTART"
 
 [node name="MenuButton" type="Button" parent="PauseMenu/Center/VBox"]
 custom_minimum_size = Vector2(280, 0)
 size_flags_horizontal = 4
-text = "MENU UTAMA"
+text = "MAIN MENU"
 
 [node name="Hint" type="Label" parent="PauseMenu/Center/VBox"]
 theme_type_variation = &"SmallLabel"
 theme_override_colors/font_color = Color(0.29, 0.282, 0.388, 1)
-text = "ESC untuk lanjut"
+text = "ESC to resume"
 horizontal_alignment = 1
 
 [node name="Fader" type="ColorRect" parent="."]

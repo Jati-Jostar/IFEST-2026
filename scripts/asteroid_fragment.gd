@@ -1,6 +1,9 @@
 extends Area2D
 
 # Pecahan asteroid: melesat keluar, berputar, umur pendek.
+# Selama fragment_arm_time pertama pecahan TIDAK bisa mengenai apa pun:
+# saat asteroid hancur di tengah kerumunan, pecahan lahir tepat di atas
+# musuh dan akan langsung habis di frame pertama tanpa sempat terlihat.
 # Mengenai musuh -> musuh kena damage bersumber "fragment" (masuk chain).
 # Mengenai player -> damage kecil penuh (tanpa multiplier — bukan ledakan).
 # Hilang setelah kena 1 target atau umurnya habis.
@@ -9,6 +12,7 @@ var velocity: Vector2 = Vector2.ZERO
 
 var _life_left: float = 1.0
 var _has_hit: bool = false
+var _arm_left: float = 0.0   # sisa waktu kebal: belum bisa mengenai apa pun
 
 @onready var visual: Node2D = $Visual
 
@@ -16,6 +20,7 @@ var _has_hit: bool = false
 func _ready() -> void:
 	add_to_group("fragments")
 	_life_left = GameBalance.fragment_lifetime
+	_arm_left = GameBalance.fragment_arm_time
 	area_entered.connect(_on_area_entered)
 	body_entered.connect(_on_body_entered)
 
@@ -29,6 +34,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	global_position += velocity * delta
+	_arm_left -= delta
 	visual.rotation += 8.0 * delta   # berputar jelas saat terbang
 	_life_left -= delta
 	if _life_left <= 0.0:
@@ -36,7 +42,9 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_area_entered(area: Area2D) -> void:
-	if _has_hit or not (area.is_in_group("enemies") or area.is_in_group("worms")):
+	if _has_hit or _arm_left > 0.0:
+		return
+	if not (area.is_in_group("enemies") or area.is_in_group("worms")):
 		return
 	_has_hit = true
 	AudioManager.play("fragment_hit", global_position)
@@ -45,7 +53,9 @@ func _on_area_entered(area: Area2D) -> void:
 
 
 func _on_body_entered(body: Node2D) -> void:
-	if _has_hit or not body.is_in_group("player"):
+	if _has_hit or _arm_left > 0.0:
+		return
+	if not body.is_in_group("player"):
 		return
 	_has_hit = true
 	AudioManager.play("fragment_hit", global_position)

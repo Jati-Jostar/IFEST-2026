@@ -19,6 +19,7 @@ extends CanvasLayer
 @onready var score_record_label: Label = $GameOverPanel/Center/VBox/ScoreRecord
 @onready var fader: ColorRect = $Fader
 @onready var pause_menu: Control = $PauseMenu
+@onready var speed_label: Label = $SpeedLabel
 
 const COLOR_READY_SINGULARITY := Color(0.75, 0.45, 1.0)   # ungu (sama dengan ikonnya) — biru dipakai laser
 const COLOR_READY_NUKE := Color(1.0, 0.85, 0.3)
@@ -48,11 +49,23 @@ signal pause_toggle_requested
 
 func _ready() -> void:
 	# Semua tombol UI -> signal, supaya UI tidak perlu tahu soal scene.
-	$PauseMenu/Center/VBox/ResumeButton.pressed.connect(resume_pressed.emit)
-	$PauseMenu/Center/VBox/RestartButton.pressed.connect(restart_pressed.emit)
-	$PauseMenu/Center/VBox/MenuButton.pressed.connect(menu_pressed.emit)
-	$GameOverPanel/Center/VBox/Buttons/RetryButton.pressed.connect(restart_pressed.emit)
-	$GameOverPanel/Center/VBox/Buttons/MenuButton.pressed.connect(menu_pressed.emit)
+	var resume_btn: Button = $PauseMenu/Center/VBox/ResumeButton
+	var restart_btn: Button = $PauseMenu/Center/VBox/RestartButton
+	var pause_menu_btn: Button = $PauseMenu/Center/VBox/MenuButton
+	var retry_btn: Button = $GameOverPanel/Center/VBox/Buttons/RetryButton
+	var over_menu_btn: Button = $GameOverPanel/Center/VBox/Buttons/MenuButton
+	resume_btn.pressed.connect(resume_pressed.emit)
+	restart_btn.pressed.connect(restart_pressed.emit)
+	pause_menu_btn.pressed.connect(menu_pressed.emit)
+	retry_btn.pressed.connect(restart_pressed.emit)
+	over_menu_btn.pressed.connect(menu_pressed.emit)
+
+	# Suara interface (hover + tekan).
+	AudioManager.wire_button(resume_btn, "confirm")
+	AudioManager.wire_button(restart_btn, "click")
+	AudioManager.wire_button(pause_menu_btn, "back")
+	AudioManager.wire_button(retry_btn, "confirm")
+	AudioManager.wire_button(over_menu_btn, "back")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -63,9 +76,17 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # Buka/tutup layar jeda. Pohon scene di-pause oleh main.gd.
 func set_paused(paused: bool) -> void:
+	if paused != pause_menu.visible:
+		AudioManager.play_ui("ui_open" if paused else "ui_close")
 	pause_menu.visible = paused
 	if paused:
 		$PauseMenu/Center/VBox/ResumeButton.grab_focus()
+
+
+# Elemen HUD yang rata KANAN harus membesar ke dalam, bukan ke luar layar:
+# pivot diletakkan di tepi kanannya, bukan di tengah.
+func _pivot_right(c: Control) -> void:
+	c.pivot_offset = Vector2(c.size.x, c.size.y * 0.5)
 
 
 func set_hp(hp: int) -> void:
@@ -96,6 +117,16 @@ func set_ammo(ammo: int, max_ammo: int) -> void:
 	Juice.punch_scale(ammo_label, 1.1, 0.12)
 
 
+# Ramp chaos: hanya tampil kalau game sudah lebih cepat dari normal.
+func set_speed(mult: float) -> void:
+	speed_label.visible = mult > 1.001
+	if not speed_label.visible:
+		return
+	speed_label.text = "SPEED x%.2f" % mult
+	_pivot_right(speed_label)
+	Juice.punch_scale(speed_label, 1.25, 0.25)
+
+
 func set_score(score: int) -> void:
 	score_label.text = "SCORE: %06d" % score
 
@@ -124,7 +155,7 @@ func _style_ability_label(label: Label, prefix: String, held: bool,
 
 	label.text = "%s: READY ●" % prefix
 	label.add_theme_color_override("font_color", ready_color)
-	label.pivot_offset = label.size / 2.0
+	_pivot_right(label)
 	Juice.punch_scale(label, 1.18, 0.18)
 	# Denyut halus selama masih dipegang — mustahil terlewat sudut mata.
 	var tw := label.create_tween()
@@ -163,7 +194,7 @@ func set_laser(progress: float, ready: bool) -> void:
 		laser_label.text = "[F] LASER: READY ●"
 		laser_label.add_theme_color_override("font_color", GameBalance.laser_charge_color)
 		if not _laser_was_ready:
-			laser_gauge.pivot_offset = laser_gauge.size / 2.0
+			_pivot_right(laser_gauge)
 			Juice.punch_scale(laser_gauge, 1.15, 0.2)
 			_laser_pulse = laser_gauge.create_tween()
 			_laser_pulse.set_loops()
@@ -182,7 +213,7 @@ func set_laser(progress: float, ready: bool) -> void:
 
 # F ditekan tanpa charge: gauge berkedip merah sebentar + bergetar kecil.
 func flash_laser_denied() -> void:
-	laser_gauge.pivot_offset = laser_gauge.size / 2.0
+	_pivot_right(laser_gauge)
 	Juice.flash(laser_gauge, Color(1.6, 0.5, 0.5), GameBalance.laser_no_charge_flash_time)
 	Juice.punch_scale(laser_gauge, 1.08, 0.15)
 
@@ -192,7 +223,7 @@ func flash_laser_denied() -> void:
 # adalah inti game; rekor baru ditandai "REKOR BARU!" yang berdenyut.
 func show_game_over(score: int, best_chain: int,
 		new_high_score: bool = false, new_best_chain: bool = false) -> void:
-	final_score_label.text = "SKOR %s" % SaveData.format_thousands(score)
+	final_score_label.text = "SCORE %s" % SaveData.format_thousands(score)
 	best_chain_label.text = "x%d" % best_chain
 	_show_record_mark(chain_record_label, new_best_chain)
 	_show_record_mark(score_record_label, new_high_score)

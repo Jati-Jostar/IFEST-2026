@@ -22,7 +22,7 @@ const MENU_SCENE := "res://scenes/main_menu.tscn"
 
 var _cluster_timer: float = 0.0  # diisi initial_spawn_delay di _ready
 var _asteroid_timer: float = 0.0
-var _pickup_timer: float = 8.0   # drop pertama cepat supaya player segera kenal ability
+var _pickup_timer: float = 0.0   # diisi ability_first_spawn_delay di _ready
 var _next_pickup_is_singularity: bool = true
 var _ammo_timer: float = 3.0     # amunisi pertama muncul lebih cepat dari ability
 var _heal_timer: float = 15.0    # heal pertama tidak di awal run
@@ -36,6 +36,7 @@ var _demo_waypoint: Vector2
 var _worm_timer: float = 0.0     # jeda antar spawn worm
 var _laser_was_ready: bool = false
 var _paused: bool = false
+var _game_speed: float = 1.0     # ramp chaos: naik tiap game_speed_score_step
 
 @onready var arena_border: Line2D = $ArenaBorder
 @onready var player: CharacterBody2D = $Player
@@ -61,6 +62,7 @@ func _ready() -> void:
 	player.abilities_changed.connect(ui.set_abilities)
 	player.ammo_changed.connect(ui.set_ammo)
 	chain_manager.score_changed.connect(player.on_score_changed)
+	chain_manager.score_changed.connect(_on_score_changed_speed)
 	player.laser_changed.connect(ui.set_laser)
 	player.laser_changed.connect(_on_laser_changed)
 	player.laser_denied.connect(ui.flash_laser_denied)
@@ -74,6 +76,7 @@ func _ready() -> void:
 	ui.set_abilities(false, false)
 	ui.set_ammo(GameBalance.player_max_ammo, GameBalance.player_max_ammo)
 	ui.set_laser(0.0, false)
+	ui.set_speed(1.0)
 
 	_draw_arena_border()
 
@@ -81,6 +84,10 @@ func _ready() -> void:
 	# Cegah efek "meluncur" di frame pertama setelah player dipindah paksa.
 	player.reset_physics_interpolation()
 
+	# Lagu gameplay; kalau slotnya kosong, lagu menu lanjut tanpa jeda.
+	AudioManager.play_music(AudioManager.game_music)
+	_pickup_timer = GameBalance.ability_first_spawn_delay
+	_next_pickup_is_singularity = not GameBalance.ability_first_is_nuke
 	_cluster_timer = GameBalance.initial_spawn_delay
 	ui.fade_in(GameBalance.gameover_fade_time)
 
@@ -171,6 +178,19 @@ func _leave(change_scene: Callable) -> void:
 	change_scene.call()
 
 
+# Ramp chaos: tiap game_speed_score_step skor, seluruh game berjalan
+# game_speed_increment lebih cepat, sampai game_speed_max.
+func _on_score_changed_speed(score: int) -> void:
+	var steps := int(float(score) / float(GameBalance.game_speed_score_step))
+	var speed := minf(1.0 + steps * GameBalance.game_speed_increment, GameBalance.game_speed_max)
+	if is_equal_approx(speed, _game_speed):
+		return
+	_game_speed = speed
+	ui.set_speed(speed)
+	if not _game_over:
+		Juice.set_base_time_scale(speed)
+
+
 # Catatan playtest (hanya di build debug): kapan laser pertama kali READY,
 # untuk menyetel laser_score_thresholds.
 func _on_laser_changed(_progress: float, ready: bool) -> void:
@@ -185,20 +205,22 @@ func _on_player_died() -> void:
 	# audio_manager.gd) — aman dipanggil, dan siap kalau nanti diisi.
 	AudioManager.play("game_over")
 	# Slow-motion sesaat, lalu layar game over fade in.
+	# Slow-motion game over memakai nilai absolut (tidak ikut ramp chaos).
 	Juice.base_time_scale = GameBalance.game_over_slowmo_scale
 	Engine.time_scale = GameBalance.game_over_slowmo_scale
 	SaveData.submit_run(chain_manager.score, chain_manager.highest_chain)
 	ui.show_game_over(chain_manager.score, chain_manager.highest_chain,
 		SaveData.last_new_high_score, SaveData.last_new_best_chain)
 	await get_tree().create_timer(GameBalance.game_over_slowmo_time, true, false, true).timeout
-	Juice.base_time_scale = 1.0
-	Engine.time_scale = 1.0
+	# Kembali ke kecepatan ramp yang sedang berlaku, bukan selalu 1.0.
+	Juice.set_base_time_scale(_game_speed)
 
 
 # ---------------- CLUSTER SPAWNING ----------------
 
 func _try_spawn_cluster() -> void:
-	if _swarm_count() >= GameBalance.max_swarms_on_screen:
+	var swarm_cap := _current_swarm_cap()
+	if _swarm_count() >= swarm_cap:
 		return
 	var center := _find_cluster_center()
 	var cid := _next_cluster_id
@@ -222,7 +244,7 @@ func _try_spawn_cluster() -> void:
 	# bukan menumpuk di 1 titik; separation langsung merapikan sisanya.
 	var swarm_count := randi_range(GameBalance.cluster_swarm_min, GameBalance.cluster_swarm_max)
 	for i in swarm_count:
-		if _swarm_count() >= GameBalance.max_swarms_on_screen:
+		if _swarm_count() >= swarm_cap:
 			return
 		var off := Vector2.RIGHT.rotated(randf() * TAU) \
 			* randf_range(25.0, GameBalance.cluster_spawn_radius)
@@ -255,6 +277,14 @@ func _can_spawn_heavy_at(pos: Vector2) -> bool:
 		if node != null and node.global_position.distance_to(pos) < GameBalance.heavy_min_distance:
 			return false
 	return true
+
+
+# Batas swarm hidup SAAT INI: naik bertahap dari max_swarms_start ke
+# max_swarms_end, murni mengikuti SKOR (bukan waktu bertahan).
+func _current_swarm_cap() -> int:
+	var t := clampf(
+		float(chain_manager.score) / maxf(GameBalance.max_swarms_ramp_score, 0.001), 0.0, 1.0)
+	return int(round(lerpf(GameBalance.max_swarms_start, GameBalance.max_swarms_end, t)))
 
 
 # Kesulitan 0..1 dari waktu bertahan + total skor.
