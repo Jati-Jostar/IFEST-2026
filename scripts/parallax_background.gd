@@ -16,11 +16,19 @@ extends Node2D
 # (arena - layar) x scroll_scale, yang selalu <= (arena - layar).
 # Jadi gambar seukuran arena selalu cukup, berapa pun zoom dan scale-nya.
 
+# Bintang kecil bergerak subpiksel; nearest membuatnya tampak meloncat.
+# Matikan di Inspector jika ingin kembali ke tampilan pixel yang tajam.
+@export var smooth_distant_stars: bool = true
+
 var _layers: Array[Node2D] = []
 var _scales: Array[float] = []
 
 
 func _ready() -> void:
+	var distant_stars := get_node_or_null("Layer2/Sprite") as Sprite2D
+	if distant_stars != null and smooth_distant_stars:
+		distant_stars.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+
 	# Posisi di-set di _physics_process, jadi biarkan interpolasi fisika aktif (default).
 
 	var scales := GameBalance.parallax_scroll_scales

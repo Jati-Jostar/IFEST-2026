@@ -10,46 +10,46 @@
 [ext_resource type="Texture2D" uid="uid://caq3dfbepygdw" path="res://assets/sprites/Background-Paralax/paralax-galaxy(Layer 3) _0001.png" id="bg_l3"]
 [ext_resource type="Texture2D" uid="uid://drpskigly1did" path="res://assets/sprites/Background-Paralax/paralax-galaxy(Layer 4) _0001.png" id="bg_l4"]
 [ext_resource type="Texture2D" uid="uid://dnkf0ts2idwik" path="res://assets/sprites/Background-Paralax/paralax-galaxy(Layer 5) _0001.png" id="bg_l5"]
-[ext_resource type="Script" path="res://scripts/parallax_background.gd" id="bg_script"]
+[ext_resource type="Script" uid="uid://bci86g0awrs4y" path="res://scripts/parallax_background.gd" id="bg_script"]
 
 [node name="Main" type="Node2D" unique_id=1823519118]
 script = ExtResource("1_main")
 
-[node name="Background" type="Node2D" parent="."]
+[node name="Background" type="Node2D" parent="." unique_id=147604834]
 z_index = -3
 script = ExtResource("bg_script")
 
-[node name="Layer1" type="Node2D" parent="Background"]
+[node name="Layer1" type="Node2D" parent="Background" unique_id=84724937]
 
-[node name="Sprite" type="Sprite2D" parent="Background/Layer1"]
+[node name="Sprite" type="Sprite2D" parent="Background/Layer1" unique_id=1455536696]
 texture_filter = 1
 texture = ExtResource("bg_l1")
 centered = false
 
-[node name="Layer2" type="Node2D" parent="Background"]
+[node name="Layer2" type="Node2D" parent="Background" unique_id=1784038633]
 
-[node name="Sprite" type="Sprite2D" parent="Background/Layer2"]
+[node name="Sprite" type="Sprite2D" parent="Background/Layer2" unique_id=2118562395]
 texture_filter = 1
 texture = ExtResource("bg_l2")
 centered = false
 
-[node name="Layer3" type="Node2D" parent="Background"]
+[node name="Layer3" type="Node2D" parent="Background" unique_id=1962390460]
 
-[node name="Sprite" type="Sprite2D" parent="Background/Layer3"]
+[node name="Sprite" type="Sprite2D" parent="Background/Layer3" unique_id=1159117549]
 texture_filter = 1
 texture = ExtResource("bg_l3")
 centered = false
 
-[node name="Layer4" type="Node2D" parent="Background"]
+[node name="Layer4" type="Node2D" parent="Background" unique_id=1160297073]
 
-[node name="Sprite" type="Sprite2D" parent="Background/Layer4"]
+[node name="Sprite" type="Sprite2D" parent="Background/Layer4" unique_id=168470022]
 texture_filter = 1
 texture = ExtResource("bg_l5")
 centered = false
 
-[node name="Layer5" type="Node2D" parent="Background"]
+[node name="Layer5" type="Node2D" parent="Background" unique_id=931368698]
 
-[node name="Sprite" type="Sprite2D" parent="Background/Layer5"]
+[node name="Sprite" type="Sprite2D" parent="Background/Layer5" unique_id=1647707839]
 texture_filter = 1
 texture = ExtResource("bg_l4")
 centered = false
@@ -60,6 +60,7 @@ z_index = -2
 script = ExtResource("3_stars")
 
 [node name="ArenaBorder" type="Line2D" parent="." unique_id=944772536]
+visible = false
 width = 4.0
 default_color = Color(0.25, 0.3, 0.45, 1)
 
@@ -71,3 +72,5 @@ script = ExtResource("4_chain")
 
 [node name="UI" parent="." unique_id=1683246040 instance=ExtResource("5_ui")]
 process_mode = 3
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=500619034]

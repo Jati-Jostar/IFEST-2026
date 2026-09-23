@@ -64,7 +64,7 @@ var cluster_heavy_max: int = 1              # Heavy per cluster. Dibatasi 1 kare
 											# satu cluster akan saling ditolak sendiri.
 var cluster_heavy_chance: float = 0.5       # peluang sebuah cluster membawa Heavy (0-1).
 											# Cluster tanpa Heavy = ancaman jenis lain.
-var heavy_max_on_screen: int = 5            # Heavy hidup maksimal sekaligus
+var heavy_max_on_screen: int = 7            # Heavy hidup maksimal sekaligus
 var heavy_min_distance: float = 250.0       # jarak minimal antar-Heavy saat spawn
 var cluster_spawn_radius: float = 90.0      # sebaran anggota di sekitar pusat cluster saat spawn
 var cluster_cohesion_weight: float = 0.4    # tarikan swarm ke pusat cluster-nya sendiri
@@ -188,7 +188,7 @@ var separation_update_interval: int = 4    # hitung ulang tiap N frame physics (
 # Heavy & fragment mengabaikan decay (reset depth ke 0) -> alat penyambung.
 var chain_time_window: float = 2.0       # detik tanpa reaksi = chain berakhir
 var chain_stagger: float = 0.05          # jeda antar generasi ledakan (anti-freeze + terlihat kaskade)
-var swarm_death_burst_radius: float = 70.0
+var swarm_death_burst_radius: float = 90.0
 var swarm_death_burst_damage: int = 10   # = swarm_hp: satu burst membunuh swarm sehat
 										 # -> 1 kill di kerumunan langsung memicu kaskade
 var chain_damage_decay: float = 0.8      # tiap kedalaman chain, damage burst dikali ini (80%).
@@ -203,6 +203,7 @@ var player_self_damage_multiplier: float = 0.35  # damage ledakan sendiri/chain 
 var score_swarm: int = 100
 var score_heavy: int = 500
 var score_asteroid: int = 50             # dipakai mulai Phase 5
+var chain_score_multiplier: float = 0.75 # skor saat chain aktif dikurangi 25%
 # skor kill = nilai dasar x chain saat itu (minimal x1)
 
 # ============ JUICE (game feel) ============
@@ -211,7 +212,7 @@ var shake_global_multiplier: float = 0.5
 var shake_max: float = 34.0              # batas shake saat banyak event bersamaan.
 										 # Dinaikkan supaya shake Nuke (30) tidak
 										 # ikut terpotong jadi selevel Heavy.
-var max_fx_nodes: int = 100               # batas node efek visual aktif (jaga performa).
+var max_fx_nodes: int = 250               # batas node efek visual aktif (jaga performa).
 										 # Dinaikkan dari 60: tiap kematian swarm kini
 										 # memakai 2 node (animasi + ring).
 
@@ -339,7 +340,7 @@ var worm_min_chain_damage: int = 10
 # Laser READY tiap kali skor melewati ambang berikutnya. Ambang makin mahal.
 # Maksimal 1 charge dipegang. Setelah ambang di daftar habis, ambang
 # berikutnya = ambang terakhir + laser_threshold_step, dst.
-var laser_score_thresholds: Array[int] = [100000, 5000000, 9000000]
+var laser_score_thresholds: Array[int] = [1000000, 3000000, 6000000, 8000000]
 var laser_threshold_step: int = 5000000
 var laser_charge_color: Color = Color("#4DA6FF")   # biru laser (bar READY, ring, beam)
 var laser_gauge_pulse_time: float = 0.9            # satu denyut bar saat READY
@@ -391,9 +392,9 @@ var healthbar_chip_time: float = 0.3
 # Tiap kelipatan skor ini, SELURUH game berjalan lebih cepat (Engine
 # time scale): musuh, spawn, peluru, animasi — semuanya. Makin jauh
 # bertahan = makin kacau.
-var game_speed_score_step: int = 2000000
-var game_speed_increment: float = 0.25   # +25% tiap tangga
-var game_speed_max: float = 2.0          # mentok 2x kecepatan normal
+var game_speed_score_step: int = 2500000
+var game_speed_increment: float = 0.20   # +25% tiap tangga
+var game_speed_max: float = 2.0       # mentok 2x kecepatan normal
 
 # ============ KAMERA & PENANDA ANCAMAN ============
 # Arena (1600x1200) lebih besar dari layar (960x720), jadi ada musuh yang

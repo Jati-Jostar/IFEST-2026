@@ -54,7 +54,7 @@ func on_enemy_died(enemy_type: String, pos: Vector2, killed_by: String, depth: i
 
 	# Skor: nilai dasar x chain saat ini (minimal x1).
 	var base: int = GameBalance.score_heavy if enemy_type == "heavy" else GameBalance.score_swarm
-	score += base * maxi(chain_count, 1)
+	score += _score_for_kill(base)
 	score_changed.emit(score)
 
 	# Efek kematian + burst yang menular.
@@ -94,7 +94,7 @@ func on_enemy_died(enemy_type: String, pos: Vector2, killed_by: String, depth: i
 func on_asteroid_destroyed(pos: Vector2, killed_by: String) -> void:
 	if killed_by != "bullet":
 		_increment_chain(pos)
-	score += GameBalance.score_asteroid * maxi(chain_count, 1)
+	score += _score_for_kill(GameBalance.score_asteroid)
 	score_changed.emit(score)
 	Juice.spawn_ring(pos, 90.0, Color(0.75, 0.75, 0.8, 1.0), 0.3)
 	Juice.shake(GameBalance.shake_asteroid_intensity, GameBalance.shake_asteroid_duration)
@@ -107,7 +107,7 @@ func on_asteroid_destroyed(pos: Vector2, killed_by: String) -> void:
 func on_worm_died(body_points: Array[Vector2], _killed_by: String) -> void:
 	if body_points.is_empty():
 		return
-	score += GameBalance.score_worm * maxi(chain_count, 1)
+	score += _score_for_kill(GameBalance.score_worm)
 	score_changed.emit(score)
 
 	# Juice = gabungan swarm + Heavy, tapi berbentuk GARIS:
@@ -130,6 +130,16 @@ func on_worm_died(body_points: Array[Vector2], _killed_by: String) -> void:
 	Juice.hitstop(GameBalance.hitstop_worm)
 	_schedule_line_explosion(body_points, GameBalance.worm_explosion_width * 0.5,
 		GameBalance.worm_explosion_damage, 0)
+
+
+# Kill langsung tetap memberi skor dasar penuh. Saat chain aktif, seluruh
+# hasil base x chain dikurangi sesuai chain_score_multiplier.
+func _score_for_kill(base: int) -> int:
+	var reward := base * maxi(chain_count, 1)
+	if chain_count > 0:
+		reward = int(round(reward * GameBalance.chain_score_multiplier))
+	return maxi(reward, 1)
+
 
 func _increment_chain(pos: Vector2) -> void:
 	chain_count += 1
