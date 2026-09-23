@@ -21,8 +21,7 @@ var _scales: Array[float] = []
 
 
 func _ready() -> void:
-	# Posisi di-set tiap frame, jadi interpolasi fisika justru bikin goyang.
-	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	# Posisi di-set di _physics_process, jadi biarkan interpolasi fisika aktif (default).
 
 	var scales := GameBalance.parallax_scroll_scales
 	var i := 0
@@ -35,7 +34,7 @@ func _ready() -> void:
 		i += 1
 
 
-func _process(_delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	var cam := get_viewport().get_camera_2d()
 	if cam == null:
 		return
