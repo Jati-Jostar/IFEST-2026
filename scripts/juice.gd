@@ -130,8 +130,13 @@ func screen_flash(color: Color, strength: float, duration: float) -> void:
 
 # ---------------- EFEK DUNIA (ring, spark, floating text) ----------------
 
-func spawn_ring(position: Vector2, radius: float, color: Color, duration: float) -> void:
-	if not _fx_slot_free():
+# budget = bagian dari max_fx_nodes yang boleh dipakai efek ini.
+# 1.0 = boleh sampai batas penuh (dipakai event penting: Heavy, Nuke, worm).
+# Nilai lebih kecil = efek ini BERHENTI DULUAN saat kaskade padat, menyisakan
+# slot untuk animasi ledakan yang membawa informasi "musuh ini mati".
+func spawn_ring(position: Vector2, radius: float, color: Color, duration: float,
+		budget: float = 1.0) -> void:
+	if not _fx_slot_free(budget):
 		return
 	var ring := RING_SCENE.instantiate()
 	_track_fx(ring)
@@ -187,8 +192,9 @@ func spawn_sparks(position: Vector2, direction: Vector2) -> void:
 	spark.setup(direction)
 
 
-func floating_text(position: Vector2, text: String, color: Color, size: float) -> void:
-	if not _fx_slot_free():
+func floating_text(position: Vector2, text: String, color: Color, size: float,
+		budget: float = 1.0) -> void:
+	if not _fx_slot_free(budget):
 		return
 	var ft := TEXT_SCENE.instantiate()
 	_track_fx(ft)
@@ -198,8 +204,8 @@ func floating_text(position: Vector2, text: String, color: Color, size: float) -
 	ft.setup(text, color, int(size))
 
 
-func _fx_slot_free() -> bool:
-	return _active_fx < GameBalance.max_fx_nodes and get_tree().current_scene != null
+func _fx_slot_free(budget: float = 1.0) -> bool:
+	return _active_fx < int(GameBalance.max_fx_nodes * budget) and get_tree().current_scene != null
 
 
 func _track_fx(fx: Node) -> void:

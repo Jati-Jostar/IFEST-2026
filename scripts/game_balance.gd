@@ -215,6 +215,17 @@ var max_fx_nodes: int = 100               # batas node efek visual aktif (jaga p
 										 # Dinaikkan dari 60: tiap kematian swarm kini
 										 # memakai 2 node (animasi + ring).
 
+
+# Ring jangkauan kematian swarm BERHENTI DULUAN saat slot efek menipis.
+# Alasannya: tiap kematian swarm memakai 2 node (animasi + ring), jadi 60
+# kematian serempak butuh 120 slot padahal batasnya 100 — sebagian kematian
+# terakhir jadi tanpa visual sama sekali. Dengan jatah ini, ring (bumbu) yang
+# dikorbankan lebih dulu supaya animasi ledakan (informasi "musuh ini mati")
+# selalu kebagian slot. 1.0 = tanpa prioritas, kembali seperti sebelumnya.
+var fx_ring_budget: float = 0.55
+var fx_text_budget: float = 0.45   # jatah angka "xN" (paling kecil: tumpukan angka
+								   # di kaskade besar memang tidak terbaca)
+
 var hit_flash_duration: float = 0.06     # kedip putih saat musuh kena peluru
 var hit_punch_amount: float = 1.15       # musuh membesar sesaat saat kena hit
 var hit_punch_duration: float = 0.12

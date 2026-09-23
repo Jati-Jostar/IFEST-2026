@@ -30,9 +30,15 @@ var show_milestones: bool = true
 var _chain_time_left: float = 0.0
 
 
+# Jendela chain dihitung dalam WAKTU NYATA, bukan waktu permainan.
+# delta di sini sudah dikali Engine.time_scale, jadi saat ramp chaos
+# menaikkan kecepatan ke 2x, jendela 2 detik ikut menyusut jadi 1 detik
+# nyata — combo putus dua kali lebih cepat justru saat layar paling ramai.
+# Membaginya kembali dengan time_scale mengembalikan durasi aslinya, dan
+# ini juga benar saat hitstop (time_scale 0.05): waktu nyata tetap jalan.
 func _process(delta: float) -> void:
 	if chain_count > 0:
-		_chain_time_left -= delta
+		_chain_time_left -= delta / maxf(Engine.time_scale, 0.001)
 		if _chain_time_left <= 0.0:
 			_end_chain()
 
@@ -66,7 +72,10 @@ func on_enemy_died(enemy_type: String, pos: Vector2, killed_by: String, depth: i
 		# Animasi ledakan (sprite) + ring kode: dua lapis, masing-masing
 		# bisa diatur sendiri. Artist cukup mengganti SpriteFrames-nya.
 		Juice.spawn_fx(EXPLOSION_SMALL, pos)
-		Juice.spawn_ring(pos, GameBalance.swarm_death_burst_radius, Color(1.0, 0.45, 0.35, 1.0), 0.25)
+		# Ring pakai jatah terbatas: saat puluhan mati serempak, ring yang
+		# dilewati lebih dulu — animasi di atas selalu kebagian slot.
+		Juice.spawn_ring(pos, GameBalance.swarm_death_burst_radius,
+			Color(1.0, 0.45, 0.35, 1.0), 0.25, GameBalance.fx_ring_budget)
 		# SENGAJA tanpa screen shake: dengan puluhan swarm mati per detik,
 		# shake kecil terus-menerus bikin pusing dan menenggelamkan momen
 		# besar. Shake disimpan untuk Heavy, Nuke, asteroid, dan player kena.
@@ -133,7 +142,11 @@ func _increment_chain(pos: Vector2) -> void:
 
 	if chain_count >= 2:
 		var size := 18.0 + minf(chain_count * 1.5, 26.0)
-		Juice.floating_text(pos, "x%d" % chain_count, _chain_color(chain_count), size)
+		# Angka "xN" per kematian pakai jatah paling kecil: saat puluhan mati
+		# serempak, puluhan angka bertumpuk juga tidak terbaca. Yang harus
+		# selalu muncul adalah animasi ledakannya.
+		Juice.floating_text(pos, "x%d" % chain_count, _chain_color(chain_count), size,
+			GameBalance.fx_text_budget)
 
 	# Milestone: perayaan ekstra di tengah layar.
 	if show_milestones and (chain_count == 10 or chain_count == 20 or chain_count == 30):
